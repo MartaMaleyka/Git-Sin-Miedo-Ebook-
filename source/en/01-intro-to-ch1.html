@@ -1,0 +1,194 @@
+<h2>Contents</h2>
+<p><strong>Introduction</strong></p>
+<ul><li><p>Why I wrote this book · Who I am · How it is organized · How to read the commands · What you will achieve · What you need to get started</p></li></ul>
+<p><strong>Chapter 0. The Chaos Before Git</strong></p>
+<ul><li><p>The four problems of saving by hand · What version control is · The history of Git · Centralized or distributed · What Git is not · Myths that hold people back</p></li></ul>
+<p><strong>Chapter 1. Git, GitLab and GitHub Without the Confusion</strong></p>
+<ul><li><p>Differences between Git, GitLab and GitHub · Repositories, commits and history · Local and remote · A tour of the GitLab interface · What is inside a commit · Terminal or buttons · Project visibility</p></li></ul>
+<p><strong>Chapter 2. Set Up Your Computer</strong></p>
+<ul><li><p>Opening the terminal · Installing Git · Configuring your user · HTTPS with a token and SSH with keys · Cloning a repository · <code>git clone</code> vs <code>git init</code> · Git in your editor · Common problems</p></li></ul>
+<p><strong>Chapter 3. Your First Cycle: Look Before You Save</strong></p>
+<ul><li><p>Git's three areas · <code>status</code>, <code>diff</code>, <code>add</code>, <code>commit</code>, <code>log</code>, <code>pull</code> and <code>push</code> · How to write clear commits · <code>.gitignore</code> · <code>git add -p</code> and <code>git show</code> · Fixing the last commit · Common mistakes in the cycle</p></li></ul>
+<p><strong>Chapter 4. Branches: Work Without Fear</strong></p>
+<ul><li><p>What they are for · Creating, switching, publishing, updating and deleting branches · Unsaved changes when switching branches · How to name them · Short-lived branches · Branches in GitLab</p></li></ul>
+<p><strong>Chapter 5. Merge Requests: Ask Permission to Integrate</strong></p>
+<ul><li><p>Creating a Merge Request · Describing a change well · Drafts · How to review and comment · Responding to feedback · Completing the merge · Small Merge Requests</p></li></ul>
+<p><strong>Chapter 6. Conflicts: Don't Erase Someone Else's Work</strong></p>
+<ul><li><p>Why they happen · What they look like · How to resolve them step by step · In the editor and in GitLab · Special cases · How to prevent them</p></li></ul>
+<p><strong>Chapter 7. Emergency Kit: Undo Without Losing Work</strong></p>
+<ul><li><p><code>restore</code>, <code>revert</code> and <code>reset</code>: the differences · <code>stash</code> · <code>reflog</code>, the safety net · Recipes for common accidents · Commands that deserve respect</p></li></ul>
+<p><strong>Chapter 8. Organize Your Work in GitLab</strong></p>
+<ul><li><p>Issues and templates · Labels · Assignees and dates · Connecting commits and Merge Requests to an issue · Milestones · Boards · Wiki and documentation</p></li></ul>
+<p><strong>Chapter 9. CI/CD: Learn to Read the Traffic Light</strong></p>
+<ul><li><p>What CI/CD means · What pipelines are for · Stages and jobs · How to tell whether a pipeline passed or failed · What to do when it fails · A note: it is not configured in this book</p></li></ul>
+<p><strong>Chapter 10. Security and Good Practices</strong></p>
+<ul><li><p>Roles and permissions · Protected branches · Never store secrets · What to do if you pushed a secret · Protecting your account · What to check before merging and deploying · Team good practices</p></li></ul>
+<p><strong>Chapter 11. Git with an Agent: You Decide, the AI Executes</strong></p>
+<ul><li><p>What can be automated and what cannot · The five rules of safe automation · A script with confirmation · An agent with clear rules · What you should understand even when it is automated</p></li></ul>
+<p><strong>Chapter 12. Investigating History: Git as a Detective</strong></p>
+<ul><li><p>Filtering history · <code>git blame</code> · Comparing versions and branches · <code>fetch</code> and <code>pull</code> · Fast-forward, merge commit, squash and rebase · Finding when a bug started</p></li></ul>
+<p><strong>Chapter 13. Versions, Tags and Forks</strong></p>
+<ul><li><p>Semantic versioning · Creating and publishing tags · Releases · Forks and contributions to other people's projects · Basic Markdown · A good README</p></li></ul>
+<p><strong>Chapter 14. Final Practical Project</strong></p>
+<ul><li><p>Cloning · Creating the issue and the branch · Changes and commits · Opening the Merge Request · Fixing feedback · Reviewing the pipeline · Completing the merge · Final assessment</p></li></ul>
+<p><strong>Closing</strong></p>
+<ul><li><p>7-day action plan</p></li><li><p>Pocket glossary</p></li><li><p>Command cheat sheet</p></li><li><p>Appendix. Funny, curious and rarely used commands</p></li></ul>
+
+<h2>Introduction</h2>
+<p>This book is for you if you ever lost a file, overwrote a teammate's work, or felt scared to touch a shared project. You don't need to know how to program. You only need the willingness to work with more order and fewer scares.</p>
+<h3>Why I wrote this book</h3>
+<p>I learned Git on my own, with tutorials, trial and error. For a long time I did something I laugh about today: I saved everything at once, without looking at what I was saving. What was ready and what wasn't, everything went into the same package.</p>
+<p>I also lived through Git's other great scare: a huge conflict caused by keeping two versions of the work apart for weeks. When I finally wanted to bring them together, there were crossed changes everywhere. It took me far longer to fix that than to do the original work.</p>
+<p>And as an instructor and a teammate, I have seen a mistake that repeats a lot: when a conflict appears, people panic and "solve" it by deleting someone else's work. The problem disappears from the screen, but someone's work is gone.</p>
+<p>None of this happens because people are careless. It happens because nobody explained Git calmly, with real examples and without strange words. That is what I try to do here.</p>
+<h3>Who I am</h3>
+<p>I am Marta Magallón, a systems programmer analyst. Today I work with GitLab at my job and with GitHub on my personal projects. I write code in Cursor and use artificial intelligence as a support tool, but I review every change before I publish it. I was a Python instructor at the Technological University of Panama, and there I learned that almost everything makes sense when it is explained with a good example.</p>
+<h3>How this book is organized</h3>
+<p>Every chapter has the same structure, so you always know what to expect:</p>
+<ol><li><p><strong>A real story</strong> that shows the problem.</p></li><li><p><strong>The explanation</strong>, step by step and in plain language.</p></li><li><p><strong>Examples</strong> you can copy and try.</p></li><li><p><strong>A practical exercise</strong> for you to do.</p></li><li><p><strong>A checklist</strong> to confirm that you understood.</p></li></ol>
+<p>At the end you will find a 7-day action plan, a glossary and a cheat sheet with all the commands.</p>
+<h3>How to read the commands</h3>
+<p>You will see blocks like this:</p>
+<pre><code class="language-bash">git status</code></pre>
+<p>That is something you type in the <strong>terminal</strong>: a window where you give orders to your computer by typing instead of clicking. Don't be scared. In chapter 2 I show you how to open it, and you will see it is easier than it looks.</p>
+<h3>We will use GitLab, but it also works for GitHub</h3>
+<p>The examples use GitLab, which is what many institutions and companies use. If you use GitHub, almost everything works the same way. When something has a different name, you will see a box like this one:</p>
+<blockquote><p><strong>On GitHub it is called…</strong> What GitLab calls a <em>Merge Request</em>, GitHub calls a <em>Pull Request</em>. It is the same thing with a different name.</p></blockquote>
+<h3>What you will achieve by the end</h3>
+<p>When you finish this book you will be able to:</p>
+<ul><li><p>Download a project from GitLab and work on it without fear of breaking anything.</p></li><li><p>Save your changes with clear messages your team understands.</p></li><li><p>Work in branches to try things without touching the main version.</p></li><li><p>Ask for your work to be reviewed with a Merge Request and respond to comments.</p></li><li><p>Resolve conflicts without erasing anyone's work.</p></li><li><p>Undo mistakes calmly, knowing which command to use in each case.</p></li><li><p>Organize tasks in GitLab and read whether a pipeline passed or failed.</p></li><li><p>Use an AI agent or script to help you, without losing control of what gets published.</p></li></ul>
+<h3>What you need to get started</h3>
+<ul><li><p>A computer with Windows, Mac or Linux.</p></li><li><p>An internet connection.</p></li><li><p>A free GitLab account (I explain how in chapter 1).</p></li><li><p>A text editor. A plain notepad will do, but I recommend VS Code or Cursor, which are free and show Git changes in colors.</p></li><li><p>About two or three hours per chapter if you do the exercises at a calm pace.</p></li></ul>
+<p>You don't need to know how to program. The exercises use simple text files so you can focus on Git and not on code.</p>
+<h3>How to get the most out of it</h3>
+<ul><li><p><strong>Read with the terminal open.</strong> Git is learned by doing. Every time you see a command, try it in your practice project.</p></li><li><p><strong>Don't skip the exercises.</strong> They are designed so you can make mistakes in a safe place, before making them in a real project.</p></li><li><p><strong>Use the checklists honestly.</strong> If you can't tick a point, go back to that part of the chapter before moving on.</p></li><li><p><strong>Practice with someone.</strong> From chapter 4 on, the exercises are more fun (and more realistic) if you do them with a teammate on the same project.</p></li><li><p><strong>Keep the command sheet</strong> at the end of the book handy. Nobody memorizes them at the start, and that is fine.</p></li></ul>
+<h3>A promise</h3>
+<p>You are going to make mistakes while you learn. That is fine. One of the best things about Git is that almost everything can be undone. Chapter 7 is dedicated exactly to that. So take a breath, open your computer, and let's begin.</p>
+<h2>Chapter 0. The Chaos Before Git</h2>
+<p>Saving versions by hand works when you work alone and with few files. As soon as another person joins, or the project grows, it becomes a mess you cannot control. This chapter shows you why, and what problem Git comes to solve.</p>
+<h3>The folder everyone has had</h3>
+<p>You surely recognize something like this:</p>
+<pre><code>Report/
+├── report.docx
+├── report_v2.docx
+├── report_v2_reviewed.docx
+├── report_final.docx
+├── report_final_REALLY_FINAL.docx
+└── report_final_v3_DEFINITIVE_Carlos.docx</code></pre>
+<p>Now answer yourself honestly:</p>
+<ul><li><p>Which is the good version?</p></li><li><p>What changed between <code>report_v2</code> and <code>report_final</code>?</p></li><li><p>Who made each change, and why?</p></li><li><p>If Carlos and you edited at the same time, how do you combine what both of you did?</p></li></ul>
+<p>Nobody knows for sure. And that is with a single document. Imagine a system with hundreds of files and five people working at the same time.</p>
+<h3>The four problems of saving by hand</h3>
+<p><strong>1. You don't know what changed.</strong> You have two almost identical files and you would have to read them line by line to find the difference.</p>
+<p><strong>2. You don't know who or why.</strong> Even if you find the change, there is no note saying who made it or what they were trying to solve.</p>
+<p><strong>3. You can't safely go back.</strong> If something breaks, which copy do you return to? And what do you lose by doing it?</p>
+<p><strong>4. Teamwork is a lottery.</strong> Two people edit the same file, send it by email or chat, and one of them ends up overwriting the other's work without noticing.</p>
+<h3>What version control is</h3>
+<p><strong>Version control</strong> is a system that keeps the complete history of your project for you. Think of it as an automatic logbook.</p>
+<p>Every time you finish a step, you tell the system: "save this moment". And the system records:</p>
+<ul><li><p><strong>What</strong> changed, exactly, line by line.</p></li><li><p><strong>Who</strong> changed it.</p></li><li><p><strong>When</strong> it changed.</p></li><li><p><strong>Why</strong>, with a short message that you write.</p></li></ul>
+<p>Instead of having six copies of the report, you have one single file with its whole history stored behind it. You can see any past version whenever you want, without filling the folder with copies.</p>
+<h3>A comparison that helps: save points</h3>
+<p>If you have played video games, you know save points. Before facing the final boss, you save the game. If you lose, you return to that point without starting from zero.</p>
+<p>Git works the same way. Each "save" is a snapshot of your project at that moment. If something goes wrong, you return to the previous snapshot. The difference is that in Git every snapshot carries a note explaining what you did.</p>
+<h3>And teamwork</h3>
+<p>The most powerful part is not saving your history. It is that <strong>several people can work on the same project at the same time</strong> without stepping on each other.</p>
+<p>Each person works on their own copy. When they finish, the system helps combine the changes. If two people touched the same line, the system does not decide on its own: it warns you and asks you to choose. That is called a <strong>conflict</strong>, and we dedicate all of chapter 6 to it.</p>
+<h3>It is not only for programmers</h3>
+<p>Git was born for code, but it works for any work done with plain text files:</p>
+<ul><li><p>Technical documentation and manuals.</p></li><li><p>Websites.</p></li><li><p>Server configuration files.</p></li><li><p>Books and documents written in text format.</p></li><li><p>Data analysis scripts.</p></li></ul>
+<p>If you work in technology, in any role, sooner or later you will touch a repository. It is better to do it without fear.</p>
+<h3>A little history: where Git came from</h3>
+<p>Linus Torvalds created Git in 2005, the same person who created Linux. Thousands of people around the world worked on the Linux code and needed a fast tool to combine their changes without depending on a central server. The tool they had used stopped being available to them, so Torvalds wrote his own in a few weeks.</p>
+<p>Today Git is the standard. It is used from students with their first project to banks, governments and the largest technology companies in the world. Learning it is not learning a fashionable tool: it is learning the common language of work in technology.</p>
+<h3>Centralized or distributed: why it matters</h3>
+<p>Before Git there were other version control systems. Many were <strong>centralized</strong>: the history lived on a single server. If the server went down, nobody could save anything. And if it got damaged without a backup, everything was lost.</p>
+<p>Git is <strong>distributed</strong>: every person who downloads the project has a complete copy of the whole history. That gives three very practical advantages:</p>
+<ol><li><p><strong>You can work without internet.</strong> You save your progress on your computer and share it when you reconnect.</p></li><li><p><strong>It is fast.</strong> Viewing the history or comparing versions doesn't depend on the network.</p></li><li><p><strong>There are many copies.</strong> If the server has a problem, any copy held by a team member can help recover the project.</p></li></ol>
+<h3>What Git is not</h3>
+<p>So you don't get any surprises, let's clear up some common confusions:</p>
+<ul><li><p><strong>Git is not an automatic backup.</strong> It only saves what you tell it to save, and it only shares what you publish. If you never push, your work lives only on your computer.</p></li><li><p><strong>Git is not Google Drive or Dropbox.</strong> Those programs sync your files on their own, at every moment. Git saves moments that you choose, with an explanation. It takes more work, but it gives you full control.</p></li><li><p><strong>Git is not ideal for heavy files like videos or databases.</strong> It works wonderfully with text files. With large or binary files (Word, Excel, images) it can store them, but it won't show you what changed inside.</p></li><li><p><strong>Git does not decide for you.</strong> If two people change the same thing, it doesn't pick a version at random: it asks you. That is an advantage, even though it scares people at first.</p></li></ul>
+<h3>Myths that hold people back</h3>
+<p><strong>"Git is only for expert programmers."</strong> False. The basics are learned in an afternoon. The advanced parts you learn when you need them.</p>
+<p><strong>"If I use Git, I can break everyone's project."</strong> Very hard, if you follow the practices in this book. You will work in your own copy and on your own branch, and changes are reviewed before they enter the main version.</p>
+<p><strong>"The terminal is dangerous."</strong> Most of the commands you will use only look or save. The few that can delete something I will mark with a warning.</p>
+<p><strong>"If I make a mistake, I lose everything."</strong> Quite the opposite. Git keeps so much history that almost everything can be recovered. It is harder to lose work with Git than without it.</p>
+<h3>What it costs not to have version control</h3>
+<p>In teams and institutions where version control is not used, the same scenes repeat:</p>
+<ul><li><p>A system stops working after a change and nobody knows what was touched.</p></li><li><p>The only person who knew where the good version was went on vacation, or quit.</p></li><li><p>An old version is deployed to production because someone uploaded the wrong copy.</p></li><li><p>To find out who made a change, you have to dig through emails and chat messages from months ago.</p></li></ul>
+<p>None of that is the fault of the people. It is a lack of tools and process. Git plus a platform like GitLab solves both.</p>
+<h3>Real example: the same problem, with and without Git</h3>
+<p><strong>Without Git.</strong> Ana and Luis maintain the website of their office. Ana changes the opening hours. Luis, at the same time, corrects the phone number. Luis uploads his version to the server after Ana. Result: the phone number is right, but the opening hours went back to the old ones. Nobody notices until a customer arrives at a closed office.</p>
+<p><strong>With Git.</strong> Ana saves her change with the message "Update opening hours". Luis saves his: "Fix contact phone number". When Luis tries to publish, Git warns him that there are new changes from Ana. Luis pulls them first, Git combines both changes because they touch different parts, and everything is published together. In addition, anyone can later see who changed the opening hours and when.</p>
+<h3>Exercise</h3>
+<p>You don't need to install anything yet.</p>
+<ol><li><p>Open the folder of some project or work of yours (documents, presentations, code).</p></li><li><p>Look for repeated files with names like <code>final</code>, <code>v2</code>, <code>copy</code> or <code>new</code>.</p></li><li><p>Choose one and answer on a sheet of paper: which is the good version, what changed between versions, and who made each change?</p></li><li><p>Write down how long it took you to answer, and how sure you really are of each answer.</p></li></ol>
+<p>Keep that sheet. When you finish the book, look at it again and compare it with what Git would let you answer in seconds.</p>
+<h3>Chapter checklist</h3>
+<ul><li data-checked="false"><p><input type="checkbox" disabled> I can explain in my own words what version control is.</p></li><li data-checked="false"><p><input type="checkbox" disabled> I understand the four problems of saving versions by hand.</p></li><li data-checked="false"><p><input type="checkbox" disabled> I know that Git stores what, who, when and why of each change.</p></li><li data-checked="false"><p><input type="checkbox" disabled> I understand that Git lets several people work at the same time.</p></li><li data-checked="false"><p><input type="checkbox" disabled> I know that a conflict is when two people touch the same thing, and that Git asks me to decide.</p></li><li data-checked="false"><p><input type="checkbox" disabled> I reviewed one of my folders and found the chaos of manual versions.</p></li></ul>
+<h2>Chapter 1. Git, GitLab and GitHub Without the Confusion</h2>
+<p>Git is the tool that keeps the history of your project on your computer. GitLab and GitHub are websites where you keep a copy of that project to share it with your team. Confusing them is the number one mistake when starting out, so let's separate them clearly.</p>
+<h3>A comparison: the notebook and the library</h3>
+<p>Imagine that <strong>Git is your notebook</strong>. In it you note every step of your work, with date and explanation. The notebook is yours, lives on your computer, and works even without internet.</p>
+<p><strong>GitLab and GitHub are the library.</strong> It is a shared place where you leave a copy of your notebook so your team can see it, copy it and add things to it. The library also has meeting rooms, bulletin boards, and people who review what comes in.</p>
+<table><thead><tr><th></th><th>Git</th><th>GitLab</th><th>GitHub</th></tr></thead><tbody><tr><td>What it is</td><td>A program you install</td><td>A website / platform</td><td>A website / platform</td></tr><tr><td>Where it lives</td><td>Your computer</td><td>On the internet or on your company's own server</td><td>On the internet</td></tr><tr><td>Works without internet</td><td>Yes</td><td>No</td><td>No</td></tr><tr><td>What it is for</td><td>Saving the history of changes</td><td>Sharing, reviewing and organizing teamwork</td><td>Sharing, reviewing and organizing teamwork</td></tr><tr><td>Typical use</td><td>Always, with either of the two</td><td>Companies and institutions that want their own control</td><td>Personal projects and open source</td></tr></tbody></table>
+<p>An important detail: <strong>GitLab can be installed on your own company's servers.</strong> That is why it is very common in public institutions and organizations that don't want their code to leave their network. GitHub, on the other hand, is widely used for personal and open source projects.</p>
+<p>In my case I use both: GitLab at work and GitHub for my personal projects. What you learn here serves you for both.</p>
+<h3>The words you will hear all the time</h3>
+<p><strong>Repository (or "repo").</strong> The folder of your project with its whole history saved. From the outside it looks like a normal folder. Inside it has a hidden folder called <code>.git</code> where Git keeps the logbook. Never touch that folder by hand.</p>
+<p><strong>Local repository.</strong> The copy of the project that is on your computer.</p>
+<p><strong>Remote repository.</strong> The copy that is on GitLab or GitHub. It is the one the whole team shares.</p>
+<p><strong>Commit.</strong> A save point. A snapshot of the project at a moment, with a message that explains what you changed. It is the basic unit of Git.</p>
+<p><strong>History.</strong> The list of all the commits, from the most recent to the oldest. It is the complete story of the project.</p>
+<p><strong>Branch.</strong> A parallel line of work. It lets you try things without touching the main version. We look at it in depth in chapter 4.</p>
+<h3>Local and remote: the idea that confuses the most</h3>
+<p>Here is the key that many people find hard at first: <strong>saving a change on your computer is not the same as publishing it for the team.</strong></p>
+<p>The path of a change is like this:</p>
+<ol><li><p>You edit a file on your computer.</p></li><li><p>You make a <strong>commit</strong>: the change is saved in your notebook, only on your computer.</p></li><li><p>You make a <strong>push</strong> (send): you send your commits to GitLab. Now the team can see them.</p></li><li><p>Your teammates do a <strong>pull</strong> (fetch and combine): they bring your changes to their computers.</p></li></ol>
+<p>If you commit but never push, your work exists only on your computer. If your disk fails, it is lost. And your team never saw it. This misunderstanding causes a huge number of "but I did save it!" problems.</p>
+<h3>Why this makes teamwork possible</h3>
+<p>Each person on the team has their own complete copy of the project, with the whole history. They work calmly on their computer. When they finish something, they send it to the shared copy on GitLab.</p>
+<p>GitLab acts as the meeting point. That is where everyone's changes come together, are reviewed before being accepted, and a record of every decision is kept. Nobody sends files to anyone by email.</p>
+<h3>A tour of the GitLab interface</h3>
+<p>When you open a project in GitLab, you will see a menu on the left. You don't need to use all of it today. These are the parts you will visit most:</p>
+<table><thead><tr><th>Menu section</th><th>What you find there</th><th>Chapter</th></tr></thead><tbody><tr><td>Project page</td><td>The files, the README and the button to clone</td><td>1 and 2</td></tr><tr><td>Code &gt; Repository / Files</td><td>Browsing files and folders</td><td>1</td></tr><tr><td>Code &gt; Commits</td><td>The history of changes</td><td>3</td></tr><tr><td>Code &gt; Branches</td><td>The project's branches</td><td>4</td></tr><tr><td>Code &gt; Merge requests</td><td>The requests to integrate changes</td><td>5</td></tr><tr><td>Plan &gt; Issues</td><td>Tasks and problem reports</td><td>8</td></tr><tr><td>Plan &gt; Wiki</td><td>The project documentation</td><td>8</td></tr><tr><td>Build &gt; Pipelines</td><td>The automatic checks</td><td>9</td></tr><tr><td>Settings &gt; Members</td><td>Who has access and with which permissions</td><td>10</td></tr></tbody></table>
+<p>The exact menu names may change a little depending on the version of GitLab your organization uses. If you can't find something, use the search at the top.</p>
+<p><strong>The README.</strong> On the main page of the project you will almost always see a text below the list of files. It is the <code>README.md</code> file, the project's introduction letter. A good README explains what the project does and how to start using it. Always read it before touching anything.</p>
+<blockquote><p><strong>On GitHub it is called…</strong> The structure is similar. On GitHub you will see tabs at the top instead of a side menu: <em>Code</em>, <em>Issues</em>, <em>Pull requests</em>, <em>Actions</em> (the equivalent of pipelines) and <em>Settings</em>.</p></blockquote>
+<h3>What is inside a commit</h3>
+<p>Each commit stores five things. Knowing them helps you read any history:</p>
+<table><thead><tr><th>Part</th><th>What it is</th><th>Example</th></tr></thead><tbody><tr><td>Identifier</td><td>A unique code, generated by Git</td><td><code>a3f9c21</code> (short version)</td></tr><tr><td>Author</td><td>Name and email of whoever made the change</td><td>Ana Pérez <a href="mailto:ana@ejemplo.com">ana@ejemplo.com</a></td></tr><tr><td>Date</td><td>When it was made</td><td>October 8, 10:42 a.m.</td></tr><tr><td>Message</td><td>The explanation of the change</td><td>Fix contact phone number</td></tr><tr><td>Previous commit</td><td>The commit it starts from</td><td><code>7b2e104</code></td></tr></tbody></table>
+<p>That last point is key: <strong>each commit points to the previous one.</strong> That forms a chain, like the links of a chain or the numbered pages of a diary. Thanks to that chain, Git can rebuild the project exactly as it was at any moment.</p>
+<p>That is also why a commit cannot be "edited" in secret. If you change something in an old commit, its identifier changes, and so does every commit that comes after it. It is a protection: the history can be trusted.</p>
+<h3>Other platforms you will hear about</h3>
+<p>GitLab and GitHub are the best known, but not the only ones. All of them use Git underneath, so what you learn here works on any of them:</p>
+<ul><li><p><strong>Bitbucket</strong>: common in companies that use other Atlassian tools, such as Jira.</p></li><li><p><strong>Azure DevOps</strong>: widely used in organizations that work with Microsoft technologies.</p></li><li><p><strong>Gitea and Forgejo</strong>: lightweight options to install on your own server.</p></li></ul>
+<p>The menus and some names change. Git is the same.</p>
+<h3>Terminal or buttons: what is better to use?</h3>
+<p>You can use Git in three ways, and they are not mutually exclusive:</p>
+<ol><li><p><strong>The terminal.</strong> You type the commands. It is what we will use most in this book, because it forces you to understand what is happening and it works the same on any computer.</p></li><li><p><strong>Your code editor.</strong> VS Code and Cursor have a Git panel with buttons to view changes, commit, push and pull. It is comfortable and visual.</p></li><li><p><strong>The GitLab website.</strong> You can edit files and make commits directly in the browser. It is good for small changes, such as correcting a text in the README.</p></li></ol>
+<p>My recommendation: learn with the terminal and then use whatever feels most comfortable to you. When something fails, knowing what each command does will get you out of the problem. The editor's buttons only run those same commands for you.</p>
+<h3>Public, private and internal projects</h3>
+<p>When you create a project in GitLab, you choose who can see it:</p>
+<table><thead><tr><th>Visibility</th><th>Who can see it</th><th>When to use it</th></tr></thead><tbody><tr><td>Private</td><td>Only the people you invite</td><td>Your company's work, personal projects in progress</td></tr><tr><td>Internal</td><td>Anyone with an account on that GitLab</td><td>Projects the whole organization may consult</td></tr><tr><td>Public</td><td>Anyone on the internet</td><td>Open source projects, portfolios, educational material</td></tr></tbody></table>
+<p>When in doubt, start with <strong>private</strong>. You can always open it later. The reverse is more delicate: what was public may already have been copied.</p>
+<h3>Frequently asked questions</h3>
+<p><strong>Is Git free?</strong> Yes. Git is free software. GitLab and GitHub have free plans that are more than enough for learning and for small teams.</p>
+<p><strong>Do I need internet to use Git?</strong> To save commits, no. To share them (push) or bring in other people's (pull), yes.</p>
+<p><strong>Can I use Git with Word or Excel documents?</strong> You can store them, but Git won't be able to show you what changed inside, nor help you combine changes from two people. It works best with plain text files: code, Markdown, configuration files.</p>
+<p><strong>What happens if I delete the project folder on my computer?</strong> If you had pushed, nothing serious: you clone it again from GitLab. What you had not published is lost.</p>
+<h3>Real example: reading a project's history</h3>
+<p>Open any public project on GitLab or GitHub and go to the commits section. You will see something like this:</p>
+<pre><code>Fix the total calculation in the monthly report
+Ana Pérez · 2 hours ago
+
+Add date filter to the search
+Luis Gómez · yesterday
+
+Update installation instructions in the README
+Ana Pérez · 3 days ago</code></pre>
+<p>Without opening a single file you already know what has happened in the project, who did it and when. If you click on a commit, GitLab shows you exactly which lines were added (in green) and which were removed (in red).</p>
+<h3>Practical exercise</h3>
+<ol><li><p>Create a free GitLab account (gitlab.com) if you don't have one yet. If your organization has its own GitLab, use that one.</p></li><li><p>Find any public project that interests you and open it.</p></li><li><p>Read its README and write in one sentence what the project does.</p></li><li><p>Go to the commits section. Choose three commits and note: who made it, when, and what its message says.</p></li><li><p>Open one of those commits and look at the lines in green and red. Do you understand what changed?</p></li><li><p>Browse the menu on the left and locate: Issues, Merge requests and Pipelines. Just look at them, don't touch anything.</p></li></ol>
+<h3>Chapter checklist</h3>
+<ul><li data-checked="false"><p><input type="checkbox" disabled> I know that Git is a program and GitLab/GitHub are web platforms.</p></li><li data-checked="false"><p><input type="checkbox" disabled> I can explain what a repository, a commit and the history are.</p></li><li data-checked="false"><p><input type="checkbox" disabled> I understand the difference between a local and a remote repository.</p></li><li data-checked="false"><p><input type="checkbox" disabled> I know that making a commit is not publishing: to share, I have to push.</p></li><li data-checked="false"><p><input type="checkbox" disabled> I have a GitLab account.</p></li><li data-checked="false"><p><input type="checkbox" disabled> I found the README, commits, Merge Requests and Issues of a project.</p></li><li data-checked="false"><p><input type="checkbox" disabled> I know that on GitHub a Merge Request is called a Pull Request.</p></li></ul>

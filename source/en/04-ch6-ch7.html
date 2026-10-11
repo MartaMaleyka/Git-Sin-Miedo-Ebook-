@@ -1,0 +1,231 @@
+<h2>Chapter 6. Conflicts: Don't Erase Someone Else's Work</h2>
+<p>A conflict appears when two people changed the same part of a file and Git can't decide which version is the right one. It is not an error or a failure: it is Git being honest and asking you for help. In this chapter you will lose your fear of conflicts and learn to resolve them without erasing anyone's work.</p>
+<h3>My story: the giant conflict</h3>
+<p>The worst conflict I ever lived through was not caused by a complicated change. It was caused by keeping two branches apart for weeks. While I was moving forward on mine, <code>main</code> kept changing too. When I finally wanted to combine them, Git marked conflicts in file after file.</p>
+<p>Each conflict on its own was simple. The problem was the quantity, and that I no longer remembered well why I had made each change weeks earlier. Joining the branches took me far longer than doing the original work.</p>
+<p>That is where the rule I gave you in chapter 4 came from: <strong>short branches, integrate often.</strong> A small conflict today takes five minutes to resolve. Twenty accumulated conflicts can cost you a whole day.</p>
+<h3>What I see in others: resolving by deleting</h3>
+<p>As an instructor, and on the teams where I have worked, I have seen the same scene many times. The conflict appears, the person gets scared and picks the fastest way out: keep their own version and discard the other one without reading it.</p>
+<p>The conflict disappears from the screen. Git is happy. But a teammate's change has just been lost in silence. Nobody finds out until days later, when something that was already fixed breaks again.</p>
+<p>That is why this chapter has one golden rule: <strong>a conflict is resolved by understanding both changes, not by picking yours by default.</strong></p>
+<h3>Why conflicts appear</h3>
+<p>Git is very good at combining changes. If Ana changes line 10 of a file and Luis changes line 50, Git combines both without asking. If Ana changes <code>index.html</code> and Luis changes <code>contact.html</code>, there is no problem either.</p>
+<p>A conflict only appears in these cases:</p>
+<table><thead><tr><th>Situation</th><th>Example</th></tr></thead><tbody><tr><td>Two people change <strong>the same lines</strong></td><td>Ana sets the hours until 5:00 and Luis sets them until 4:30</td></tr><tr><td>One person <strong>deletes</strong> a file and another <strong>modifies</strong> it</td><td>Luis deleted <code>old.md</code> and Ana added a paragraph to it</td></tr><tr><td>Two people <strong>create</strong> a file with the same name</td><td>Both added <code>guide.md</code> with different content</td></tr></tbody></table>
+<p>In all those cases there are two human decisions that clash. Git can't guess which one is right, and it is right not to guess.</p>
+<h3>When a conflict can show up</h3>
+<ul><li><p>When you run <code>git pull</code>, if someone published changes to the same lines you changed.</p></li><li><p>When you run <code>git merge main</code> on your branch, to update it.</p></li><li><p>In a Merge Request, when GitLab warns that your branch conflicts with <code>main</code> and won't let you merge.</p></li></ul>
+<p>In every case it is resolved the same way. Let's see how.</p>
+<h3>What a conflict looks like</h3>
+<p>When there is a conflict, Git warns you in the terminal:</p>
+<pre><code>Auto-merging contact.md
+CONFLICT (content): Merge conflict in contact.md
+Automatic merge failed; fix conflicts and then commit the result.</code></pre>
+<p>And if you look at the status:</p>
+<pre><code class="language-bash">git status</code></pre>
+<pre><code>You have unmerged paths.
+  (fix conflicts and run &quot;git commit&quot;)
+  (use &quot;git merge --abort&quot; to abort the merge)
+
+Unmerged paths:
+        both modified:   contact.md</code></pre>
+<p><strong>both modified</strong> means "both sides changed this file". That is the one you have to review.</p>
+<p>When you open <code>contact.md</code> you will see something like this:</p>
+<pre><code># Contact
+
+&lt;&lt;&lt;&lt;&lt;&lt;&lt; HEAD
+Hours: Monday to Friday, 8:00 to 5:00
+=======
+Hours: Monday to Friday, 8:00 to 4:30
+&gt;&gt;&gt;&gt;&gt;&gt;&gt; fix/friday-hours
+
+Phone: 500-0000</code></pre>
+<p>Those odd markers were put there by Git to show you both sides:</p>
+<ul><li><p>Between <code>&lt;&lt;&lt;&lt;&lt;&lt;&lt; HEAD</code> and <code>=======</code> is <strong>your version</strong>, the one on the branch you are on.</p></li><li><p>Between <code>=======</code> and <code>&gt;&gt;&gt;&gt;&gt;&gt;&gt; fix/friday-hours</code> is <strong>the version you are bringing in</strong>, from the other branch.</p></li><li><p>Everything outside the markers (like the phone number) has no conflict.</p></li></ul>
+<h3>How to resolve it, step by step</h3>
+<h4 id="1-dont-panic-and-dont-delete-anything-yet">1. Don't panic, and don't delete anything yet</h4>
+<p>The conflict hasn't broken anything. Your work and your teammate's work are safe. If you need to step away and think, you can cancel everything and return to how it was before:</p>
+<pre><code class="language-bash">git merge --abort</code></pre>
+<p>It is your emergency button. Use it without guilt.</p>
+<h4 id="2-understand-both-changes">2. Understand both changes</h4>
+<p>Before touching the file, ask yourself:</p>
+<ul><li><p>What was my change trying to do?</p></li><li><p>What was the other change trying to do?</p></li><li><p>Are they incompatible, or can they be combined?</p></li></ul>
+<p>To find out who made the other change and why:</p>
+<pre><code class="language-bash">git log --oneline main -- contact.md</code></pre>
+<p>Read the commit message. If it is still unclear, <strong>ask that person.</strong> A quick message like "Hey, we both changed the hours, which one is correct?" prevents losing work. This is the part people skip most often, and the most important one.</p>
+<h4 id="3-decide-how-it-should-look">3. Decide how it should look</h4>
+<p>You have four options:</p>
+<table><thead><tr><th>Option</th><th>When</th><th>Result in the example</th></tr></thead><tbody><tr><td>Keep your version</td><td>The other change is obsolete, and you confirmed it</td><td><code>8:00 to 5:00</code></td></tr><tr><td>Keep the other version</td><td>Their change is the correct one</td><td><code>8:00 to 4:30</code></td></tr><tr><td>Keep both</td><td>Both lines should exist</td><td>Both lines, one below the other</td></tr><tr><td>Combine</td><td>Each change has a correct part</td><td>For example: <code>Monday to Thursday 8:00 to 5:00, Friday 8:00 to 4:30</code></td></tr></tbody></table>
+<p>In real life, the right option is often <strong>combining</strong>. Rarely is one of the two changes completely unnecessary.</p>
+<h4 id="4-edit-the-file-and-remove-the-markers">4. Edit the file and remove the markers</h4>
+<p>Leave the text exactly as it should be and <strong>delete the three markers</strong> (<code>&lt;&lt;&lt;&lt;&lt;&lt;&lt;</code>, <code>=======</code> and <code>&gt;&gt;&gt;&gt;&gt;&gt;&gt;</code>). For example:</p>
+<pre><code># Contact
+
+Hours: Monday to Thursday 8:00 to 5:00, Friday 8:00 to 4:30
+
+Phone: 500-0000</code></pre>
+<p>A very common mistake is forgetting one of the markers. Before going on, search the file for <code>&lt;&lt;&lt;&lt;&lt;&lt;&lt;</code>. There should be none left.</p>
+<h4 id="5-mark-the-conflict-as-resolved-and-save">5. Mark the conflict as resolved and save</h4>
+<pre><code class="language-bash">git add contact.md
+git status</code></pre>
+<p>When <code>git status</code> no longer shows files in conflict:</p>
+<pre><code class="language-bash">git commit</code></pre>
+<p>Git opens the editor with a message already written, such as <code>Merge branch &#39;main&#39; into fix/friday-hours</code>. You can leave it like that or add a line explaining how you resolved it. Save and close. Then run <code>git push</code>.</p>
+<h4 id="6-check-that-everything-works">6. Check that everything works</h4>
+<p>Resolving a conflict means changing code. Open the result, test it and make sure it does what both changes were meant to do. If the project has automatic tests, the pipeline will help you (chapter 9).</p>
+<h3>Resolving conflicts in VS Code or Cursor</h3>
+<p>The editor makes all of this more visual. When you open a file with a conflict you will see the two blocks colored, and above them some links:</p>
+<ul><li><p><strong>Accept Current Change</strong>: keep your version.</p></li><li><p><strong>Accept Incoming Change</strong>: keep the version that is coming in.</p></li><li><p><strong>Accept Both Changes</strong>: keep both.</p></li><li><p><strong>Compare Changes</strong>: see them side by side.</p></li></ul>
+<p>You can also use the <strong>Resolve in Merge Editor</strong> button, which shows three panels: your version, the incoming one, and the final result at the bottom. You can tick boxes and edit the result by hand.</p>
+<p>Be careful: these buttons are convenient, but they make it easy to make the "accept mine" mistake without reading. Read both blocks before clicking. When you are done, save the file and continue with <code>git add</code> and <code>git commit</code>, or use the buttons in the Git panel.</p>
+<h3>Resolving conflicts in GitLab</h3>
+<p>If a Merge Request has simple conflicts, GitLab shows a <strong>Resolve conflicts</strong> button. It lets you choose, block by block, between your version (<em>ours</em>) and the other one (<em>theirs</em>), or edit the file directly in the browser.</p>
+<p>It is useful for small text conflicts. For larger conflicts, or if you need to test the result, it is better to resolve them on your computer:</p>
+<pre><code class="language-bash">git switch main
+git pull
+git switch your-branch
+git merge main
+# you resolve the conflicts
+git add resolved-files
+git commit
+git push</code></pre>
+<p>When you push, the Merge Request updates and the conflict warning disappears.</p>
+<h3>Special cases</h3>
+<p><strong>One side deleted the file and the other modified it.</strong> <code>git status</code> will say <code>deleted by them</code> or <code>deleted by us</code>. Decide whether the file should exist. If it should stay, use <code>git add file</code>. If it should be deleted, use <code>git rm file</code>. Before deleting it, check whether the other side's change should have been moved somewhere else.</p>
+<p><strong>Conflicts in files that are not text</strong> (images, Word, PDF). Git can't show you the differences inside. You have to choose a complete version:</p>
+<pre><code class="language-bash">git checkout --ours logo.png     # I keep my version
+git checkout --theirs logo.png   # I keep the other one
+git add logo.png</code></pre>
+<p>Talk to the other person before choosing. One of you is going to lose their version.</p>
+<p><strong>Lots of conflicts at once.</strong> If it happens to you what happened to me, don't try to resolve everything in one go. Run <code>git merge --abort</code> and ask for help: the person who made the other changes, or someone with more experience. Sometimes it is better to integrate the changes in parts, or to create a new branch from an updated <code>main</code> and bring your changes in gradually.</p>
+<h3>How to prevent conflicts</h3>
+<p>You can't avoid all of them, and it is not bad that they appear. But you can make them few and small:</p>
+<ul><li><p><strong>Short branches.</strong> Days, not weeks.</p></li><li><p><strong>Bring <code>main</code> into your branch often</strong> if your work drags on.</p></li><li><p><strong><code>git pull</code> before you start working</strong> each day.</p></li><li><p><strong>Small commits and Merge Requests.</strong> Fewer lines touched, fewer possible clashes.</p></li><li><p><strong>Coordinate with your team.</strong> If two people are going to touch the same file, they should know. One line in the team chat saves hours.</p></li><li><p><strong>Don't reformat whole files</strong> (changing spaces, sorting lines) mixed with real changes. It creates conflicts across the whole file. If needed, do it in a separate Merge Request.</p></li></ul>
+<h3>Common mistakes when resolving conflicts</h3>
+<table><thead><tr><th>Mistake</th><th>Consequence</th><th>How to avoid it</th></tr></thead><tbody><tr><td>Always accepting "my version"</td><td>The other person's work is silently lost</td><td>Read both blocks and ask if you're unsure</td></tr><tr><td>Leaving <code>&lt;&lt;&lt;&lt;&lt;&lt;&lt;</code> markers in the file</td><td>The file is broken</td><td>Search for the markers before running <code>git add</code></td></tr><tr><td>Not testing after resolving</td><td>Two changes that don't work together get combined</td><td>Always test the result</td></tr><tr><td>Resolving in a panic, without understanding</td><td>Errors that are hard to trace</td><td>Use <code>git merge --abort</code> and come back calmly</td></tr><tr><td>Waiting weeks to integrate</td><td>Giant conflicts</td><td>Integrate often</td></tr></tbody></table>
+<h3>Real example: a conflict well resolved</h3>
+<p>Ana is on <code>feature/new-hours</code>, where she changed the hours to 8:00 to 5:00. Meanwhile, Luis's branch was merged into <code>main</code>, which set Friday until 4:30.</p>
+<p>Ana brings <code>main</code> into her branch with <code>git merge main</code> and the conflict appears in <code>contact.md</code>. Instead of accepting her version, Ana checks Luis's commit with <code>git log</code>: "Adjust Friday hours for new schedule". She messages Luis to confirm. Both changes were correct: the general hours changed, and Friday changed too.</p>
+<p>Ana combines the two versions, removes the markers, checks that none are left, runs <code>git add</code>, <code>git commit</code> and <code>git push</code>. In the commit message she adds: "Combine new hours with Luis's Friday adjustment". Nobody lost work, and there is a record of how it was resolved.</p>
+<h3>Practical exercise: cause a conflict on purpose</h3>
+<p>The best way to lose your fear is to create one yourself, in a safe place.</p>
+<ol><li><p>In <code>practice-git</code>, go to <code>main</code> and update it: <code>git switch main</code> and <code>git pull</code>.</p></li><li><p>Create a file <code>hours.md</code> with the line <code>Hours: 8:00 to 4:00</code>. Commit and push on <code>main</code> (it is your practice project, here you are allowed to).</p></li><li><p>Create a branch: <code>git switch -c fix/afternoon-hours</code>. Change the line to <code>Hours: 8:00 to 5:00</code>. Commit.</p></li><li><p>Go back to <code>main</code>: <code>git switch main</code>. Change the same line to <code>Hours: 7:00 to 4:00</code>. Commit.</p></li><li><p>Go back to your branch and bring in <code>main</code>: <code>git switch fix/afternoon-hours</code> and <code>git merge main</code>.</p></li><li><p>Read the conflict warning and run <code>git status</code>.</p></li><li><p>Open <code>hours.md</code> and identify the three markers and the two blocks.</p></li><li><p>Try <code>git merge --abort</code> and check with <code>git status</code> that everything is back to normal.</p></li><li><p>Repeat step 5 and this time resolve it by <strong>combining</strong>: <code>Hours: 7:00 to 5:00</code>. Remove the markers.</p></li><li><p>Finish with <code>git add hours.md</code>, <code>git commit</code> and <code>git push -u origin fix/afternoon-hours</code>.</p></li><li><p>Challenge: repeat the exercise resolving with the VS Code or Cursor buttons, and once more with the <strong>Resolve conflicts</strong> button of a Merge Request in GitLab.</p></li></ol>
+<h3>Chapter checklist</h3>
+<ul><li data-checked="false"><p><input type="checkbox" disabled> I understand that a conflict is not an error: Git is asking me to decide.</p></li><li data-checked="false"><p><input type="checkbox" disabled> I know in which situations conflicts appear.</p></li><li data-checked="false"><p><input type="checkbox" disabled> I can read the markers <code>&lt;&lt;&lt;&lt;&lt;&lt;&lt;</code>, <code>=======</code> and <code>&gt;&gt;&gt;&gt;&gt;&gt;&gt;</code>.</p></li><li data-checked="false"><p><input type="checkbox" disabled> I know how to cancel with <code>git merge --abort</code> when I need to think.</p></li><li data-checked="false"><p><input type="checkbox" disabled> Before resolving, I understand both changes and ask if I'm unsure.</p></li><li data-checked="false"><p><input type="checkbox" disabled> I never accept my version by default without reading the other one.</p></li><li data-checked="false"><p><input type="checkbox" disabled> I know how to finish the resolution with <code>git add</code> and <code>git commit</code>.</p></li><li data-checked="false"><p><input type="checkbox" disabled> I search for forgotten markers and test the result.</p></li><li data-checked="false"><p><input type="checkbox" disabled> I know how to resolve conflicts in the editor and in GitLab.</p></li><li data-checked="false"><p><input type="checkbox" disabled> I know the practices that prevent large conflicts.</p></li><li data-checked="false"><p><input type="checkbox" disabled> I caused and resolved a conflict in my practice project.</p></li></ul>
+<h2>Chapter 7. Emergency Kit: Undo Without Losing Work</h2>
+<p>Almost everything in Git can be undone. The key is knowing <strong>what</strong> you want to undo and <strong>whether you already published it</strong>. This chapter gives you the four commands to repair mistakes (<code>restore</code>, <code>revert</code>, <code>reset</code> and <code>stash</code>), a safety net for when everything seems lost (<code>reflog</code>), and ready-made recipes for the most common accidents.</p>
+<h3>Before touching anything: the two questions</h3>
+<p>When something goes wrong, take a breath and ask yourself:</p>
+<p><strong>1. Where is the mistake?</strong></p>
+<ul><li><p>In files I changed but haven't committed.</p></li><li><p>In the box (<code>git add</code>), but without a commit.</p></li><li><p>In a commit that only exists on my computer.</p></li><li><p>In a commit I already published with push.</p></li></ul>
+<p><strong>2. Do I want to lose that change or keep it?</strong></p>
+<p>With those two answers, you choose the tool. This is the map:</p>
+<table><thead><tr><th>Where the mistake is</th><th>Tool</th><th>Do I lose the change?</th></tr></thead><tbody><tr><td>Modified file, without <code>add</code></td><td><code>git restore file</code></td><td>Yes, it is discarded</td></tr><tr><td>In the box, without commit</td><td><code>git restore --staged file</code></td><td>No, it only leaves the box</td></tr><tr><td>Local commit, without push</td><td><code>git reset</code></td><td>Depends on the option</td></tr><tr><td>Commit already published</td><td><code>git revert</code></td><td>No, a commit that cancels it is created</td></tr><tr><td>Half-finished work I want to set aside</td><td><code>git stash</code></td><td>No, it is kept aside</td></tr></tbody></table>
+<p>And one rule that saves you from many problems: <strong>what you already published is not rewritten, it is corrected with a new commit.</strong></p>
+<h3 id="git-restore-discard-changes-you-havent-saved"><code>git restore</code>: discard changes you haven't saved</h3>
+<p>You edited a file, made a mess, and want to go back to how it was in the last commit:</p>
+<pre><code class="language-bash">git restore contact.md</code></pre>
+<p>The file returns to its last saved version.</p>
+<blockquote><p><strong>Warning:</strong> this command <strong>discards your changes forever</strong>. Since you never committed them, Git has no copy. Before using it, check with <code>git diff contact.md</code> what you are about to lose.</p></blockquote>
+<p>To discard the changes of all the files in the folder:</p>
+<pre><code class="language-bash">git restore .</code></pre>
+<p>Use it with even more care. Check <code>git status</code> first.</p>
+<p>To <strong>take a file out of the box</strong> without losing what you changed (you saw this in chapter 3):</p>
+<pre><code class="language-bash">git restore --staged contact.md</code></pre>
+<p>This one is harmless: the change stays in your file, it just stops being ready for the commit.</p>
+<p>You can also recover a file as it was in an earlier commit:</p>
+<pre><code class="language-bash">git restore --source a3f9c21 contact.md</code></pre>
+<p>The file is left as it was in that commit. Review it, and if it is useful, make a new commit with that version.</p>
+<h3 id="git-revert-undo-a-published-commit"><code>git revert</code>: undo a published commit</h3>
+<p>You already pushed and discover that a commit has a mistake. Your teammates have already downloaded it. You can't delete it from history without causing them problems. The right thing is to <strong>create a new commit that does the opposite</strong>:</p>
+<pre><code class="language-bash">git log --oneline
+git revert a3f9c21</code></pre>
+<p>Git creates a commit with a message like <code>Revert &quot;Update opening hours&quot;</code>. If the original commit added a line, the revert removes it. If it removed one, the revert puts it back. Then you run <code>git push</code> as usual.</p>
+<p>Why it is the safe option:</p>
+<ul><li><p><strong>It doesn't erase history.</strong> The commit with the mistake is still there, and so is the one that cancelled it. Anyone can see what happened.</p></li><li><p><strong>It doesn't affect your teammates.</strong> They just download a new commit, like any other.</p></li><li><p><strong>It can be undone.</strong> If you made a mistake while reverting, you can revert the revert.</p></li></ul>
+<p>In GitLab you can also do it with buttons: open the commit or the already merged Merge Request and use the <strong>Revert</strong> button. GitLab offers to create a Merge Request with the reversal.</p>
+<h3 id="git-reset-redo-commits-that-only-exist-on-your-computer"><code>git reset</code>: redo commits that only exist on your computer</h3>
+<p><code>reset</code> moves your branch backward, as if certain commits had never been made. It is powerful, which is why it has a strict rule: <strong>use it only with commits you have not published.</strong></p>
+<p><code>HEAD~1</code> means "one commit before the current one". <code>HEAD~2</code>, two commits before, and so on.</p>
+<h4 id="the-three-forms-of-reset">The three forms of reset</h4>
+<p>Imagine your last commit was a mistake and you want to undo it. What happens to the changes it had?</p>
+<table><thead><tr><th>Option</th><th>The commit</th><th>The changes</th><th>When to use it</th></tr></thead><tbody><tr><td><code>--soft</code></td><td>Undone</td><td>They stay in the box, ready for another commit</td><td>I want to redo the commit with another message or add something</td></tr><tr><td><code>--mixed</code> (default)</td><td>Undone</td><td>They stay in your files, outside the box</td><td>I want to reorganize what goes into each commit</td></tr><tr><td><code>--hard</code></td><td>Undone</td><td><strong>Deleted</strong></td><td>I want to throw all that work away</td></tr></tbody></table>
+<p>Examples:</p>
+<pre><code class="language-bash">git reset --soft HEAD~1    # Undoes the commit, keeps everything in the box
+git reset HEAD~1           # Undoes the commit, keeps the changes in your files
+git reset --hard HEAD~1    # Undoes the commit and DELETES its changes</code></pre>
+<blockquote><p><strong>Warning about <code>--hard</code>:</strong> it deletes changes from your files without asking for confirmation. Before using it, run <code>git status</code> and <code>git log --oneline</code> and make sure of what you are about to lose. If in doubt, use <code>--soft</code> or <code>--mixed</code>: you can always discard afterward.</p></blockquote>
+<h4 id="and-if-i-already-pushed">And if I already pushed?</h4>
+<p>If you undo with reset a commit that was already on GitLab, your local branch and the GitLab one become different. Git will reject your push. Forcing it (<code>git push --force</code>) <strong>rewrites shared history</strong> and can delete your teammates' work. On protected branches, like <code>main</code>, GitLab doesn't even allow it.</p>
+<p>For published commits, use <code>revert</code>. The only reasonable exception is your own branch, where nobody else works, and even then it is better to ask the team.</p>
+<h3 id="revert-reset-and-restore-the-difference-in-one-sentence"><code>revert</code>, <code>reset</code> and <code>restore</code>: the difference in one sentence</h3>
+<ul><li><p><strong><code>restore</code></strong> works with <strong>files</strong>: it returns them to a saved version.</p></li><li><p><strong><code>reset</code></strong> works with <strong>local commits</strong>: it moves your branch backward, as if they had never been made.</p></li><li><p><strong><code>revert</code></strong> works with <strong>published commits</strong>: it creates a new commit that cancels another one.</p></li></ul>
+<p>If you only remember one thing: <strong>did you already push? Then <code>revert</code>.</strong></p>
+<h3 id="git-stash-set-aside-half-finished-work"><code>git stash</code>: set aside half-finished work</h3>
+<p>You are in the middle of something, unfinished, and you need to switch branches to handle an emergency. You don't want to commit something incomplete. That is what stash is for: a drawer where you keep your changes temporarily.</p>
+<pre><code class="language-bash">git stash push -m &quot;Half-finished form&quot;</code></pre>
+<p>Your folder is left clean, as at the last commit. You can switch branches calmly now.</p>
+<p>When you come back:</p>
+<pre><code class="language-bash">git stash list</code></pre>
+<pre><code>stash@{0}: On feature/form: Half-finished form</code></pre>
+<p>To recover your changes:</p>
+<pre><code class="language-bash">git stash pop</code></pre>
+<p><code>pop</code> takes the changes out of the drawer and applies them to your folder. Other useful options:</p>
+<table><thead><tr><th>Command</th><th>What it does</th></tr></thead><tbody><tr><td><code>git stash apply</code></td><td>Applies the changes but keeps them in the drawer too, just in case</td></tr><tr><td><code>git stash drop</code></td><td>Deletes the last stash from the drawer</td></tr><tr><td><code>git stash show -p</code></td><td>Shows which changes are saved</td></tr><tr><td><code>git stash push -u -m &quot;…&quot;</code></td><td>Also includes new files that Git was not tracking yet</td></tr></tbody></table>
+<p>Three tips:</p>
+<ul><li><p><strong>Always give it a message</strong> with <code>-m</code>. With three unnamed stashes you won't know which is which.</p></li><li><p><strong>Don't use it as a warehouse.</strong> Stash is for minutes or hours, not weeks. If the work is going to last, commit it on a branch.</p></li><li><p><strong>Remember which branch you were on.</strong> You can apply a stash on another branch, but usually you want to return to the same one.</p></li></ul>
+<h3 id="git-reflog-the-safety-net"><code>git reflog</code>: the safety net</h3>
+<p>Here is the secret that reassures everyone: <strong>Git records every move you make</strong>, even the ones that "delete" commits. If you did a <code>reset --hard</code> you regret, or deleted a branch with commits, you can almost always get it back.</p>
+<pre><code class="language-bash">git reflog</code></pre>
+<pre><code>7b2e104 HEAD@{0}: reset: moving to HEAD~1
+a3f9c21 HEAD@{1}: commit: Update opening hours
+1c8d3aa HEAD@{2}: checkout: moving from main to feature/hours</code></pre>
+<p>Each line is a moment your project went through. To go back to one:</p>
+<pre><code class="language-bash">git switch -c rescue a3f9c21</code></pre>
+<p>This creates a new branch called <code>rescue</code> exactly at the point you wanted to recover. Check that everything is there and then decide what to do with it.</p>
+<p>Two limits you should know: the reflog exists only on <strong>your computer</strong>, and it keeps the movements for a while (usually several weeks), not forever. And it cannot recover changes that you <strong>never</strong> saved with a commit.</p>
+<h3 id="recipes-for-the-most-common-accidents">Recipes for the most common accidents</h3>
+<h4 id="i-committed-to-the-wrong-branch-without-push">"I committed to the wrong branch" (without push)</h4>
+<p>You committed on <code>main</code> when it should have gone on a new branch:</p>
+<pre><code class="language-bash">git branch feature/my-change      # Creates the branch pointing at your commit
+git reset --hard HEAD~1           # Removes the commit from main
+git switch feature/my-change      # Your commit is safe here</code></pre>
+<p>If there were two commits, use <code>HEAD~2</code>. Check with <code>git log --oneline</code> before the reset.</p>
+<h4 id="i-want-to-change-the-message-of-my-last-commit-without-push">"I want to change the message of my last commit" (without push)</h4>
+<pre><code class="language-bash">git commit --amend -m &quot;Correct message&quot;</code></pre>
+<h4 id="i-forgot-to-add-a-file-to-the-last-commit-without-push">"I forgot to add a file to the last commit" (without push)</h4>
+<pre><code class="language-bash">git add forgotten-file.md
+git commit --amend --no-edit</code></pre>
+<p><code>--no-edit</code> keeps the same message.</p>
+<h4 id="i-want-to-undo-my-last-commit-but-keep-the-work-without-push">"I want to undo my last commit but keep the work" (without push)</h4>
+<pre><code class="language-bash">git reset --soft HEAD~1</code></pre>
+<h4 id="a-commit-i-already-published-broke-something">"A commit I already published broke something"</h4>
+<pre><code class="language-bash">git revert commit-code
+git push</code></pre>
+<h4 id="i-want-to-throw-away-all-my-changes-and-match-gitlab">"I want to throw away all my changes and match GitLab"</h4>
+<pre><code class="language-bash">git fetch
+git status                         # Check what you are about to lose
+git reset --hard origin/main       # Your branch becomes identical to GitLab's</code></pre>
+<p>If you are on another branch, replace <code>main</code> with its name. Everything that was not published will be lost.</p>
+<h4 id="i-deleted-a-branch-that-had-work">"I deleted a branch that had work"</h4>
+<pre><code class="language-bash">git reflog                         # Find the last commit of that branch
+git switch -c branch-name commit-code</code></pre>
+<h4 id="there-are-new-files-i-dont-know-where-they-came-from-and-i-want-to-delete-them">"There are new files I don't know where they came from, and I want to delete them"</h4>
+<pre><code class="language-bash">git clean -n      # Only shows what it would delete
+git clean -f      # Deletes them for real</code></pre>
+<p>Always use <code>-n</code> first. <code>git clean</code> deletes files that Git doesn't track, and reflog cannot recover them.</p>
+<h4 id="i-uploaded-a-password-or-a-token">"I uploaded a password or a token"</h4>
+<p>No command in this list fixes this. Even if you delete it with a new commit, it stays in the history. <strong>The first thing to do is change that password or revoke the token immediately</strong>, and notify the person responsible for security. We look at it in detail in chapter 10.</p>
+<h3 id="commands-that-deserve-respect">Commands that deserve respect</h3>
+<p>These commands can delete work. They are not forbidden, but before using them stop and check with <code>git status</code> and <code>git log</code>:</p>
+<table><thead><tr><th>Command</th><th>What it can delete</th><th>Recoverable with reflog?</th></tr></thead><tbody><tr><td><code>git restore file</code></td><td>Uncommitted changes</td><td>No</td></tr><tr><td><code>git reset --hard</code></td><td>Uncommitted changes and local commits</td><td>Commits yes; uncommitted changes no</td></tr><tr><td><code>git clean -f</code></td><td>Files Git doesn't track</td><td>No</td></tr><tr><td><code>git branch -D</code></td><td>An unmerged branch</td><td>Yes, for a while</td></tr><tr><td><code>git push --force</code></td><td>Other people's commits on GitLab</td><td>Hard, and it affects the whole team</td></tr></tbody></table>
+<h3 id="real-example-the-afternoon-of-three-scares">Real example: the afternoon of three scares</h3>
+<p>Luis has a complicated afternoon:</p>
+<ol><li><p>He commits on <code>main</code> instead of on his branch. He hasn't pushed. He creates the branch with <code>git branch</code>, removes the commit from <code>main</code> with <code>reset --hard HEAD~1</code> and keeps working on his branch.</p></li><li><p>While he works, he is asked to review something urgent on another branch. He saves his half-finished work with <code>git stash push -m &quot;Report adjustments&quot;</code>, switches branches, handles the urgent task, comes back and recovers everything with <code>git stash pop</code>.</p></li><li><p>At the end of the day he discovers that a commit he published in the morning broke the total calculation. Since it is already on GitLab, he doesn't use reset: he runs <code>git revert</code>, pushes, and tells the team.</p></li></ol>
+<p>Three scares, zero work lost, and a history that tells exactly what happened.</p>
+<h3 id="practical-exercise-break-things-on-purpose">Practical exercise: break things on purpose</h3>
+<p>In your <code>practice-git</code> project, on a new branch called <code>practice/first-aid</code>:</p>
+<ol><li><p><strong>Restore.</strong> Modify <code>README.md</code>, look at the change with <code>git diff</code> and discard it with <code>git restore README.md</code>.</p></li><li><p><strong>Restore --staged.</strong> Modify a file, add it with <code>git add</code> and take it out of the box with <code>git restore --staged</code>. Check that the change is still in the file.</p></li><li><p><strong>Reset --soft.</strong> Make a commit with an ugly message. Undo it with <code>git reset --soft HEAD~1</code> and redo it with a good message.</p></li><li><p><strong>Stash.</strong> Make an uncommitted change, save it with <code>git stash push -m &quot;test&quot;</code>, switch to <code>main</code>, come back and recover it with <code>git stash pop</code>.</p></li><li><p><strong>Revert.</strong> Make a commit, publish it with push and then cancel it with <code>git revert</code>. Look at both commits in GitLab.</p></li><li><p><strong>Reflog.</strong> Make a commit, delete it with <code>git reset --hard HEAD~1</code> and recover it with <code>git reflog</code> and <code>git switch -c rescue commit-code</code>.</p></li><li><p><strong>Wrong branch.</strong> On <code>main</code> of your practice project, make a commit without pushing and move it to a new branch using the recipe from this chapter.</p></li></ol>
+<p>Note on paper which command you used in each case and why. That sheet is your personal first-aid kit.</p>
+<h3>Chapter checklist</h3>
+<ul><li data-checked="false"><p><input type="checkbox" disabled> Before undoing something, I ask myself where the mistake is and whether I already published it.</p></li><li data-checked="false"><p><input type="checkbox" disabled> I know how to discard changes with <code>git restore</code> and that they cannot be recovered.</p></li><li data-checked="false"><p><input type="checkbox" disabled> I know how to take a file out of the box with <code>git restore --staged</code>.</p></li><li data-checked="false"><p><input type="checkbox" disabled> I use <code>git revert</code> for commits that are already published.</p></li><li data-checked="false"><p><input type="checkbox" disabled> I know the three forms of <code>git reset</code> and use <code>--hard</code> with great care.</p></li><li data-checked="false"><p><input type="checkbox" disabled> I never run <code>push --force</code> on shared branches.</p></li><li data-checked="false"><p><input type="checkbox" disabled> I know how to set work aside with <code>git stash</code> and recover it with <code>git stash pop</code>.</p></li><li data-checked="false"><p><input type="checkbox" disabled> I know how to use <code>git reflog</code> to recover "lost" commits.</p></li><li data-checked="false"><p><input type="checkbox" disabled> I know how to move a commit made on the wrong branch.</p></li><li data-checked="false"><p><input type="checkbox" disabled> I know that an uploaded password must be changed immediately.</p></li><li data-checked="false"><p><input type="checkbox" disabled> I did the exercise and I have my own first-aid sheet.</p></li></ul>

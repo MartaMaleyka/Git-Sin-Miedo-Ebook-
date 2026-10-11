@@ -1,0 +1,230 @@
+<h2>Chapter 13. Versions, Tags and Forks</h2>
+<p>Tags mark important moments in the project, like "this is version 1.0 that was published". Forks let you contribute to projects that aren't yours. And Markdown is the format you will write READMEs, Merge Requests, issues and the wiki in. These three tools complete your daily work with Git.</p>
+<h3>Why mark versions</h3>
+<p>Imagine the system your team maintains is published every two weeks. One day a user reports a bug and says: "this worked in last month's version". Which commit was that version?</p>
+<p>If nobody marked it, you have to search through hundreds of commits by date and guess. If the team used <strong>tags</strong>, you write <code>v1.3.0</code> and get there directly.</p>
+<p>A tag is a fixed name given to a commit. Unlike a branch, <strong>it doesn't move</strong>: it always points to the same commit. It is like putting a bookmark on a page of the book.</p>
+<h3>How to number versions: semantic versioning</h3>
+<p>The most used convention is called <strong>semantic versioning</strong>. The number has three parts: <code>MAJOR.MINOR.PATCH</code>.</p>
+<table><thead><tr><th>Part</th><th>When it goes up</th><th>Example</th></tr></thead><tbody><tr><td>PATCH</td><td>Bug fixes, with no change in how it is used</td><td><code>1.4.2</code> → <code>1.4.3</code></td></tr><tr><td>MINOR</td><td>New features that don't break what came before</td><td><code>1.4.3</code> → <code>1.5.0</code></td></tr><tr><td>MAJOR</td><td>Changes that force users to adapt</td><td><code>1.5.0</code> → <code>2.0.0</code></td></tr></tbody></table>
+<p>When one part goes up, the ones to its right go back to zero. And versions that start with <code>0</code> (like <code>0.3.1</code>) indicate the project is still in development and may change a lot.</p>
+<p>By custom, tags carry a <code>v</code> in front: <code>v1.5.0</code>.</p>
+<h3>Creating and publishing tags</h3>
+<p>There are two types. Almost always use the <strong>annotated</strong> one, which stores the author, the date and a message:</p>
+<pre><code class="language-bash">git switch main
+git pull
+git tag -a v1.0.0 -m &quot;First stable version of the site&quot;</code></pre>
+<p>This tags the latest commit of <code>main</code>. To tag an earlier commit, add its code at the end: <code>git tag -a v0.9.0 -m &quot;…&quot; 7b2e104</code>.</p>
+<p>Tags <strong>don't travel on their own with the push</strong>. You have to publish them:</p>
+<pre><code class="language-bash">git push origin v1.0.0     # One tag
+git push origin --tags     # All local tags</code></pre>
+<p>Other useful commands:</p>
+<table><thead><tr><th>Command</th><th>What it does</th></tr></thead><tbody><tr><td><code>git tag</code></td><td>Lists the tags</td></tr><tr><td><code>git tag -l &quot;v1.*&quot;</code></td><td>Lists only those starting with v1</td></tr><tr><td><code>git show v1.0.0</code></td><td>Shows the tag and its commit</td></tr><tr><td><code>git switch --detach v1.0.0</code></td><td>Takes you to see the project as it was in that version</td></tr><tr><td><code>git tag -d v1.0.0</code></td><td>Deletes the tag on your computer</td></tr><tr><td><code>git push origin --delete v1.0.0</code></td><td>Deletes the tag on GitLab</td></tr></tbody></table>
+<blockquote><p><strong>About <code>--detach</code>.</strong> When you go to a tag, Git warns you that you are in <em>detached HEAD</em> mode: you are not on any branch. You can look and try things, but if you make commits there they are left "loose". To return, run <code>git switch main</code>. If you need to fix something in that version, create a branch from it: <code>git switch -c hotfix/v1.0.1 v1.0.0</code>.</p></blockquote>
+<p>An important rule: <strong>don't change a tag that has already been published.</strong> If version <code>v1.0.0</code> had a bug, the fix is <code>v1.0.1</code>. Moving a tag confuses everyone who already downloaded it.</p>
+<h3>Releases in GitLab</h3>
+<p>A <strong>release</strong> is a tag with presentation: a title, notes explaining what the version brings and, if needed, files to download. It is created in <strong>Deploy &gt; Releases &gt; New release</strong> (or from <strong>Code &gt; Tags</strong>).</p>
+<p>Good release notes answer what matters to whoever is going to use it:</p>
+<pre><code class="language-markdown">## v1.5.0 — October 8, 2026
+
+### New
+- Contact form with email validation.
+- Date filter in search.
+
+### Fixed
+- The footer phone number showed an old number.
+
+### Breaking changes
+- None. This version is compatible with the previous one.</code></pre>
+<p>Many projects also keep a <code>CHANGELOG.md</code> file at the root of the repository with these notes, from the newest version to the oldest. If your Merge Requests have good titles (chapter 5), writing the notes is almost copying and sorting.</p>
+<h3>Forks: contributing to projects that aren't yours</h3>
+<p>Until now you have worked on projects where you had permission to create branches. But what if you want to propose an improvement to a public project, or to one from another department, where you don't have write permission?</p>
+<p>That is what the <strong>fork</strong> is for: a complete copy of the project in <strong>your own account</strong> on GitLab. In your copy you can do whatever you want. When you have something ready, you open a Merge Request from your fork to the original project. Its maintainers decide whether to accept it.</p>
+<table><thead><tr><th></th><th>Branch</th><th>Fork</th></tr></thead><tbody><tr><td>Where it lives</td><td>Inside the same project</td><td>In your account, as a separate project</td></tr><tr><td>You need write permission</td><td>Yes</td><td>No</td></tr><tr><td>When it is used</td><td>Work within your team</td><td>Contributing to other people's or open source projects</td></tr></tbody></table>
+<h4>The path of a contribution with a fork</h4>
+<ol><li><p>In the original project, press <strong>Fork</strong> and choose your account.</p></li><li><p>Clone <strong>your fork</strong>, not the original:</p></li></ol>
+<pre><code class="language-bash">git clone git@gitlab.com:your-username/project.git
+cd project</code></pre>
+<ol start="3"><li><p>Also connect the original project, so you can bring in its updates. By custom it is called <code>upstream</code>:</p></li></ol>
+<pre><code class="language-bash">git remote add upstream git@gitlab.com:original-team/project.git
+git remote -v</code></pre>
+<p>Now you have two remotes: <code>origin</code> (your fork) and <code>upstream</code> (the original).</p>
+<ol start="4"><li><p>Create a branch, make your changes and publish them to your fork:</p></li></ol>
+<pre><code class="language-bash">git switch -c fix/documentation-error
+# you make the changes and commits
+git push -u origin fix/documentation-error</code></pre>
+<ol start="5"><li><p>In GitLab, open a Merge Request <strong>from your fork to the original project</strong>. Check the project and the target branch carefully.</p></li><li><p>Respond to comments as in chapter 5: every push to your branch updates the Merge Request.</p></li></ol>
+<h4>Keeping your fork up to date</h4>
+<p>The original project keeps moving forward. To bring its changes into your fork:</p>
+<pre><code class="language-bash">git switch main
+git fetch upstream
+git merge upstream/main
+git push origin main</code></pre>
+<p>Do it before starting each new contribution, so you don't start from an old version.</p>
+<h4>Etiquette for contributing to other people's projects</h4>
+<ul><li><p><strong>Read the README and the <code>CONTRIBUTING.md</code> file first</strong>, if it exists. They explain how they prefer to receive changes.</p></li><li><p><strong>For big changes, open an issue first</strong> and ask if they are interested. That way you don't spend days on something they won't accept.</p></li><li><p><strong>Make small, well-described Merge Requests.</strong> The people who maintain open projects are often volunteers with little time.</p></li><li><p><strong>Be patient.</strong> A reply can take days. A friendly reminder after a week is fine.</p></li></ul>
+<blockquote><p><strong>On GitHub it is called…</strong> The same: <em>Fork</em>. A Merge Request from a fork is a <em>Pull Request</em>.</p></blockquote>
+<h3>Basic Markdown: the format you will write every day</h3>
+<p>Markdown is a simple way to format text using symbols. GitLab and GitHub turn it into titles, lists and links. You will use it in the README, Merge Request descriptions, comments, issues and the wiki. Files end in <code>.md</code>.</p>
+<table><thead><tr><th>What you write</th><th>What you see</th></tr></thead><tbody><tr><td><code># Title</code></td><td>A large title</td></tr><tr><td><code>## Subtitle</code></td><td>A medium title</td></tr><tr><td><code>**bold**</code></td><td><strong>bold</strong></td></tr><tr><td><code>*italic*</code></td><td><em>italic</em></td></tr><tr><td><code>- item</code></td><td>A bulleted list</td></tr><tr><td><code>1. step</code></td><td>A numbered list</td></tr><tr><td><code>- [ ] task</code></td><td>A checkbox to tick</td></tr><tr><td><code>[text](https://link.com)</code></td><td>A link</td></tr><tr><td><code>`command`</code></td><td>Code text inline</td></tr><tr><td><code>&gt; note</code></td><td>A quote block</td></tr><tr><td><code>![description](image.png)</code></td><td>An image</td></tr></tbody></table>
+<p>For multi-line code blocks, write three backticks before and after, optionally with the language:</p>
+<pre><code class="language-markdown">```bash
+git status
+```</code></pre>
+<p>And tables are written with pipes and hyphens:</p>
+<pre><code class="language-markdown">| Command | What for |
+| --- | --- |
+| git status | See the state |
+| git log | See the history |</code></pre>
+<p>In GitLab, inside issues and Merge Requests, there are extra shortcuts that are very useful:</p>
+<ul><li><p><code>#42</code> links issue 42.</p></li><li><p><code>!15</code> links Merge Request 15.</p></li><li><p><code>@username</code> mentions a person and sends them a notification.</p></li><li><p>Pasting a commit's code turns it into a link to that commit.</p></li></ul>
+<h4>A good README</h4>
+<p>The README is the entry door to the project. This structure works for almost all of them:</p>
+<pre><code class="language-markdown"># Project name
+
+One or two sentences about what it does and for whom.
+
+## How to start
+Steps to download it and get it running.
+
+## How to use it
+Basic examples.
+
+## How to contribute
+How to name branches, how to open Merge Requests, who to ask.
+
+## Contact
+Project owners.</code></pre>
+<p>A clear README saves dozens of repeated questions for your team, and for yourself a year from now.</p>
+<h3>Real example: the version that had to be fixed</h3>
+<p>Ana's team publishes the site and tags the commit as <code>v2.0.0</code>, with a release listing what's new. Two days later a bug appears in the form.</p>
+<p>Instead of mixing the fix with the new work already entering <code>main</code>, Ana creates a branch from the tag: <code>git switch -c hotfix/v2.0.1 v2.0.0</code>. She fixes it, opens her Merge Request, it is merged, and it is tagged <code>v2.0.1</code> with a note: "Fixed: the form didn't accept emails with a hyphen".</p>
+<p>Weeks later, someone asks since when that fix exists. The answer is in <strong>Deploy &gt; Releases</strong>, without searching through commits.</p>
+<h3>Practical exercise</h3>
+<ol><li><p>In <code>practice-git</code>, update <code>main</code> and create an annotated tag <code>v0.1.0</code> with the message "First practice version". Publish it.</p></li><li><p>Make a new commit on a branch, merge it with a Merge Request and create the tag <code>v0.2.0</code>.</p></li><li><p>In GitLab, create a release for <code>v0.2.0</code> with release notes in Markdown, using the New and Fixed sections.</p></li><li><p>Use <code>git switch --detach v0.1.0</code> to see how the project was. Return with <code>git switch main</code>.</p></li><li><p>Rewrite the <code>README.md</code> of your project with this chapter's structure. Include at least a title, a list, a link, a code block and a table. See how it looks in GitLab.</p></li><li><p>Find a small public project in GitLab or GitHub and make a fork. Clone it, add <code>upstream</code> and check both remotes with <code>git remote -v</code>. You don't need to send a contribution yet: read its README and its <code>CONTRIBUTING.md</code> and note how they prefer to receive changes.</p></li></ol>
+<h3>Chapter checklist</h3>
+<ul><li data-checked="false"><p><input type="checkbox" disabled> I know what a tag is and how it differs from a branch.</p></li><li data-checked="false"><p><input type="checkbox" disabled> I understand semantic versioning: MAJOR.MINOR.PATCH.</p></li><li data-checked="false"><p><input type="checkbox" disabled> I know how to create an annotated tag and publish it.</p></li><li data-checked="false"><p><input type="checkbox" disabled> I know how to view the project at an earlier version and return to <code>main</code>.</p></li><li data-checked="false"><p><input type="checkbox" disabled> I never move a tag that has been published: I release a new version instead.</p></li><li data-checked="false"><p><input type="checkbox" disabled> I know how to create a release in GitLab with good release notes.</p></li><li data-checked="false"><p><input type="checkbox" disabled> I know what a fork is and when to use it instead of a branch.</p></li><li data-checked="false"><p><input type="checkbox" disabled> I know how to connect <code>upstream</code> and keep my fork up to date.</p></li><li data-checked="false"><p><input type="checkbox" disabled> I read the README and CONTRIBUTING before contributing to someone else's project.</p></li><li data-checked="false"><p><input type="checkbox" disabled> I know how to write basic Markdown: titles, lists, links, code and tables.</p></li><li data-checked="false"><p><input type="checkbox" disabled> I know how to use <code>#</code>, <code>!</code> and <code>@</code> in GitLab to link issues, Merge Requests and people.</p></li><li data-checked="false"><p><input type="checkbox" disabled> My practice project has a clear README.</p></li></ul>
+<h2>Chapter 14. Final Practical Project</h2>
+<p>In this chapter you will go through the complete teamwork flow, from start to finish, as you would in a real project: clone, create an issue and a branch, make changes, open a Merge Request, fix a comment, check the pipeline and complete the merge. There are no new topics. It is time to put everything you learned together.</p>
+<h3>The scenario</h3>
+<p>Your team maintains a small <strong>internal guide for new people</strong>: a page with the welcome, the team's contacts and the frequently asked questions. You are asked to add a new section of <strong>frequently asked questions about Git</strong>, because the people who arrive always ask the same things.</p>
+<p>It is a small change on purpose. What matters is not the content, but doing each step of the process well.</p>
+<h3>How to do it: in pairs, or alone</h3>
+<p><strong>In pairs (recommended).</strong> One person is the <strong>author</strong> and the other the <strong>reviewer</strong>. When you finish, you swap roles and repeat with another task. That way you live both sides of the Merge Request.</p>
+<p><strong>Alone.</strong> You play both roles. For the review, leave a few hours between writing and reviewing: you will see your work with fresher eyes. If you can, ask someone with a GitLab account to do only the review.</p>
+<h3>Project setup</h3>
+<p>You need a project that has a pipeline, to practice reading it. There are three paths, in this order of preference:</p>
+<ol><li><p><strong>Your organization or your instructor gives you a project</strong> already prepared, with a pipeline. Use it.</p></li><li><p><strong>Create it from a GitLab template</strong> that already includes a pipeline. In <strong>New project &gt; Create from template</strong>, choose a simple website template, such as <strong>Pages/Plain HTML</strong>. You don't have to configure anything: the <code>.gitlab-ci.yml</code> file is already included.</p></li><li><p><strong>Use your <code>practice-git</code> project.</strong> It won't have a pipeline, so in phase 6 you will only verify that there is none and review how it would be read.</p></li></ol>
+<p>On GitLab.com, for pipelines to run, the platform may ask you to verify your account. If you can't or don't want to do it, follow path 3: the rest of the project works the same way.</p>
+<p>We will call the project <code>team-guide</code>. If you are the owner, add your partner as <strong>Developer</strong> (chapter 10) and protect <code>main</code>: merge only by Maintainers, direct push <em>No one</em>.</p>
+<h3>Phase 1: clone the project</h3>
+<p><strong>Goal:</strong> have the project on your computer, up to date.</p>
+<pre><code class="language-bash">cd Documents
+git clone git@gitlab.com:your-username/team-guide.git
+cd team-guide
+git status
+git log --oneline -5</code></pre>
+<p><strong>Checkpoint:</strong></p>
+<ul><li data-checked="false"><p><input type="checkbox" disabled> <code>git status</code> says you are on <code>main</code> and everything is clean.</p></li><li data-checked="false"><p><input type="checkbox" disabled> You read the README to understand the project.</p></li><li data-checked="false"><p><input type="checkbox" disabled> <code>git config user.email</code> shows the email of your GitLab account.</p></li></ul>
+<p><em>If something fails:</em> check the table of common problems in chapter 2.</p>
+<h3>Phase 2: create the issue and the branch</h3>
+<p><strong>Goal:</strong> have the task exist in GitLab before touching the code.</p>
+<ol><li><p>In GitLab, create an issue (chapter 8):</p></li></ol>
+<pre><code class="language-markdown">Title: Add frequently asked questions about Git to the guide
+
+## What is needed
+A section with frequently asked questions about Git for new people.
+
+## Why
+People who arrive always ask the same questions.
+
+## When we consider it done
+- [ ] There are at least five questions with their answers.
+- [ ] The section is linked from the home page.
+- [ ] The text has no spelling mistakes.</code></pre>
+<ol start="2"><li><p>Add the label <code>documentation</code>, assign it to yourself and, if you have one, add it to a milestone.</p></li><li><p>Note its number. In the examples we will use <code>#7</code>.</p></li><li><p>Create the branch. You can use the <strong>Create merge request</strong> button of the issue, or do it from the terminal:</p></li></ol>
+<pre><code class="language-bash">git switch main
+git pull
+git switch -c docs/7-git-faq</code></pre>
+<p><strong>Checkpoint:</strong></p>
+<ul><li data-checked="false"><p><input type="checkbox" disabled> The issue has a clear title, description and done criteria.</p></li><li data-checked="false"><p><input type="checkbox" disabled> The branch follows the convention <code>type/number-description</code>.</p></li><li data-checked="false"><p><input type="checkbox" disabled> You started from an updated <code>main</code>.</p></li><li data-checked="false"><p><input type="checkbox" disabled> You moved the issue to <strong>In progress</strong> on the board, if you use one.</p></li></ul>
+<h3>Phase 3: make the changes and the commits</h3>
+<p><strong>Goal:</strong> small changes, reviewed before saving, with clear messages.</p>
+<ol><li><p>Create the file for the section. If the project is in HTML, create <code>git-faq.html</code>; if it is in Markdown, <code>git-faq.md</code>. Write at least five questions with short answers. Ideas: "What is a commit?", "Why don't I work on main?", "What do I do if a conflict appears?", "What is a Merge Request?", "What do I do if I uploaded a password?".</p></li><li><p>Look before you save and make the first commit:</p></li></ol>
+<pre><code class="language-bash">git status
+git diff
+git add git-faq.md
+git diff --staged
+git commit -m &quot;Add frequently asked questions section about Git (#7)&quot;</code></pre>
+<ol start="3"><li><p>Now link the section from the home page (the <code>index.html</code> or the <code>README.md</code>). It is a different idea, so it goes in <strong>another commit</strong>:</p></li></ol>
+<pre><code class="language-bash">git add index.html
+git commit -m &quot;Link frequently asked questions from the home page (#7)&quot;</code></pre>
+<ol start="4"><li><p>Review your history and publish the branch:</p></li></ol>
+<pre><code class="language-bash">git log --oneline -3
+git push -u origin docs/7-git-faq</code></pre>
+<p><strong>Checkpoint:</strong></p>
+<ul><li data-checked="false"><p><input type="checkbox" disabled> You made at least two commits, one per idea.</p></li><li data-checked="false"><p><input type="checkbox" disabled> Each message starts with a verb and mentions the issue.</p></li><li data-checked="false"><p><input type="checkbox" disabled> You used <code>git status</code> and <code>git diff</code> before each commit.</p></li><li data-checked="false"><p><input type="checkbox" disabled> No file unrelated to the task got in.</p></li><li data-checked="false"><p><input type="checkbox" disabled> The branch appears in GitLab, under <strong>Code &gt; Branches</strong>.</p></li></ul>
+<p><em>Optional:</em> if you practice with an agent, do this phase with it following the rules of chapter 11, and verify everything manually.</p>
+<h3>Phase 4: open the Merge Request</h3>
+<p><strong>Goal:</strong> ask for review with all the information the reviewer needs.</p>
+<ol><li><p>Open the Merge Request from the link the push gave you.</p></li><li><p>Verify: source <code>docs/7-git-faq</code>, target <code>main</code>.</p></li><li><p>Title: <code>Add frequently asked questions about Git to the guide</code>.</p></li><li><p>Description, using the chapter 5 template:</p></li></ol>
+<pre><code class="language-markdown">## What changes
+Adds a section of frequently asked questions about Git and links it
+from the home page.
+
+## Why
+New people always ask the same questions.
+
+## How to test it
+1. Open the home page.
+2. Click &quot;Frequently asked questions about Git&quot;.
+3. Check that the questions and answers appear.
+
+Closes #7</code></pre>
+<ol start="5"><li><p>Assign your partner as <strong>Reviewer</strong>, add the label <code>documentation</code> and tick <strong>Delete source branch</strong>.</p></li><li><p>Before announcing it, review the whole <strong>Changes</strong> tab yourself.</p></li></ol>
+<p><strong>Checkpoint:</strong></p>
+<ul><li data-checked="false"><p><input type="checkbox" disabled> Source and target are correct.</p></li><li data-checked="false"><p><input type="checkbox" disabled> The description explains what, why and how to test.</p></li><li data-checked="false"><p><input type="checkbox" disabled> It includes <code>Closes #7</code>.</p></li><li data-checked="false"><p><input type="checkbox" disabled> You reviewed your own changes before asking for review.</p></li></ul>
+<h3>Phase 5: review and fix a comment</h3>
+<p><strong>Goal:</strong> live the cycle of comment, fix and resolution.</p>
+<p><strong>If you are the reviewer:</strong></p>
+<ol><li><p>Read the description and then the <strong>Changes</strong> tab.</p></li><li><p>Leave <strong>at least two comments</strong> with <strong>Start a review</strong>: one marked as a suggestion, using <strong>Insert suggestion</strong>, and another that asks for a real change (for example, an answer that could be explained better, or a missing question).</p></li><li><p>Remember: comments about the content, with the reason, and something positive if there is any.</p></li><li><p>Submit the review.</p></li></ol>
+<p><strong>If you are the author:</strong></p>
+<ol><li><p>Read each comment in full.</p></li><li><p>Apply the suggestion with <strong>Apply suggestion</strong>.</p></li><li><p>For the other comment, make the fix on your computer. Since you applied a suggestion in GitLab, first bring that change in:</p></li></ol>
+<pre><code class="language-bash">git pull
+# you make the fix
+git status
+git diff
+git add git-faq.md
+git commit -m &quot;Clarify the answer about conflicts (#7)&quot;
+git push</code></pre>
+<ol start="4"><li><p>Verify that the Merge Request updated itself with your new commit.</p></li><li><p>Reply to each thread with what you did and resolve them (or let the person who commented resolve them, according to your team's agreement).</p></li><li><p>Request the review again.</p></li></ol>
+<p><strong>Extra challenge: a conflict.</strong> While the Merge Request is open, have the other person make a small Merge Request that changes the <strong>same line</strong> with the link on the home page, and merge it first. Your Merge Request will show a conflict. Resolve it on your computer with <code>git merge main</code> (chapter 6), <strong>keeping both changes</strong>, and push.</p>
+<p><strong>Checkpoint:</strong></p>
+<ul><li data-checked="false"><p><input type="checkbox" disabled> There were at least two comments and both were addressed.</p></li><li data-checked="false"><p><input type="checkbox" disabled> The fix arrived as a new commit on the same branch.</p></li><li data-checked="false"><p><input type="checkbox" disabled> All threads were resolved.</p></li><li data-checked="false"><p><input type="checkbox" disabled> If you did the challenge, the conflict was resolved without losing any change.</p></li></ul>
+<h3>Phase 6: check the pipeline</h3>
+<p><strong>Goal:</strong> read the traffic light before merging (chapter 9). Remember: you won't configure anything, only read.</p>
+<ol><li><p>In the Merge Request, find the pipeline box. Each push you made ran it automatically.</p></li><li><p>If it is <strong>running</strong>, wait.</p></li><li><p>If it is <strong>passed</strong>, open the pipeline and look at its stages and jobs. Open the log of a job and read the last lines.</p></li><li><p>If it is <strong>failed</strong>, apply the process from chapter 9: identify the job, read the end of the log, relate it to your change, fix it and push. If it has nothing to do with your change, use <strong>Retry</strong> once; if it still fails, ask for help with the link and the error lines.</p></li><li><p>If your project has no pipeline (path 3), you will see no box. Go to <strong>Build &gt; Pipelines</strong> and confirm it is empty. Then review, in a public project, how it would look.</p></li></ol>
+<p><strong>Checkpoint:</strong></p>
+<ul><li data-checked="false"><p><input type="checkbox" disabled> I know what state the pipeline ended in and why.</p></li><li data-checked="false"><p><input type="checkbox" disabled> I did not move on to the merge with the pipeline red.</p></li></ul>
+<h3>Phase 7: complete the merge</h3>
+<p><strong>Goal:</strong> close the cycle and leave everything tidy.</p>
+<ol><li><p>Review the "What to check before merging" list from chapter 10.</p></li><li><p>The reviewer approves with <strong>Approve</strong>.</p></li><li><p>Whoever has merge permission presses <strong>Merge</strong>.</p></li><li><p>Verify in GitLab:</p><ul><li><p>Issue <code>#7</code> closed on its own.</p></li><li><p>The branch was deleted.</p></li><li><p>In <strong>Code &gt; Commits</strong> of <code>main</code> your commits appear (or just one, if squash was used).</p></li><li><p>The board and the milestone were updated.</p></li></ul></li><li><p>Update your computer:</p></li></ol>
+<pre><code class="language-bash">git switch main
+git pull
+git branch -d docs/7-git-faq
+git fetch --prune
+git log --oneline --graph -10</code></pre>
+<ol start="6"><li><p><em>Optional:</em> create the tag <code>v1.1.0</code> with its release and release notes (chapter 13).</p></li></ol>
+<p><strong>Checkpoint:</strong></p>
+<ul><li data-checked="false"><p><input type="checkbox" disabled> The Merge Request was merged with approval and with everything resolved.</p></li><li data-checked="false"><p><input type="checkbox" disabled> The issue closed automatically.</p></li><li data-checked="false"><p><input type="checkbox" disabled> Your local <code>main</code> is up to date and the local branch was deleted.</p></li></ul>
+<h3>Phase 8: switch roles</h3>
+<p>If you work in pairs, repeat everything with the roles reversed and a different task. Ideas:</p>
+<ul><li><p>Add a section with the team's contacts.</p></li><li><p>Fix spelling mistakes on the home page (a <code>fix/</code> type).</p></li><li><p>Create the page "How we work" in the wiki and link it from the README.</p></li></ul>
+<h3>Final assessment</h3>
+<p>Review your work with this table. If something ended up as "not yet", go back to the indicated chapter.</p>
+<table><thead><tr><th>Skill</th><th>I got it</th><th>Not yet: review</th></tr></thead><tbody><tr><td>Clone and configure my identity</td><td></td><td>Chapter 2</td></tr><tr><td>Create a clear issue with done criteria</td><td></td><td>Chapter 8</td></tr><tr><td>Create a branch with the right convention from an updated <code>main</code></td><td></td><td>Chapter 4</td></tr><tr><td>Make small, reviewed commits with good messages</td><td></td><td>Chapter 3</td></tr><tr><td>Open a well-described Merge Request</td><td></td><td>Chapter 5</td></tr><tr><td>Review and comment respectfully</td><td></td><td>Chapter 5</td></tr><tr><td>Fix comments on the same branch</td><td></td><td>Chapter 5</td></tr><tr><td>Resolve a conflict without losing work</td><td></td><td>Chapter 6</td></tr><tr><td>Read the pipeline status</td><td></td><td>Chapter 9</td></tr><tr><td>Merge with all the protections and clean up afterward</td><td></td><td>Chapters 5 and 10</td></tr><tr><td>Verify in GitLab a change made with an agent's help</td><td></td><td>Chapter 11</td></tr></tbody></table>
+<h3>Questions to reflect on</h3>
+<p>When you finish, answer in writing. It will help you fix what you learned:</p>
+<ol><li><p>Which step of the process cost you the most, and why?</p></li><li><p>Which review comment improved your work the most?</p></li><li><p>If there was a conflict, how did you decide what to keep?</p></li><li><p>What would you do differently next time?</p></li><li><p>Which rule from this book will you propose to your team first?</p></li></ol>
+<h3>Congratulations</h3>
+<p>You have just done, from start to finish, the same flow that technology teams follow every day all over the world. You are no longer someone who "doesn't know Git": you are someone who can work in a team with version control. What comes next is practice. The 7-day plan helps you turn it into a habit.</p>

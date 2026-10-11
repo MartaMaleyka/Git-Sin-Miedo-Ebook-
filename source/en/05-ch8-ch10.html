@@ -1,0 +1,230 @@
+<h2>Chapter 8. Organize Your Work in GitLab</h2>
+<p>GitLab doesn't only store code: it is also where the team decides what to do, who does it and by when. With issues, labels, milestones, boards and the wiki, all the work stays connected: from the task to the commit that solved it. In this chapter you will learn to use those tools.</p>
+<h3>The problem with organizing through chat and email</h3>
+<p>Without a central place, tasks live in loose messages: "did anyone see the form thing?", "I think Luis was going to do it", "was that already fixed?". The questions repeat, tasks get lost and nobody knows what is pending.</p>
+<p>With GitLab, each task has its own card, an owner and a status. And every change in the code can be linked to the task that asked for it. Six months later, anyone can see why a change exists and what discussion came before it.</p>
+<h3>Issues: a card for every task</h3>
+<p>An <strong>issue</strong> is a work card. It can be a bug to fix, a new feature, an improvement, a question or a documentation task. You create it in <strong>Plan &gt; Issues &gt; New issue</strong>.</p>
+<h4>The parts of an issue</h4>
+<table><thead><tr><th>Field</th><th>What it is for</th></tr></thead><tbody><tr><td>Title</td><td>What needs to be done, in one line</td></tr><tr><td>Description</td><td>The detail: context, steps, criteria for calling it done</td></tr><tr><td>Assignee</td><td>Who is responsible</td></tr><tr><td>Labels</td><td>Tags to classify: type, priority, area</td></tr><tr><td>Milestone</td><td>Which delivery or cycle it belongs to</td></tr><tr><td>Due date</td><td>Deadline</td></tr><tr><td>Comments</td><td>The conversation about the task</td></tr></tbody></table>
+<p>Each issue gets an automatic number, such as <code>#42</code>. That number is its identity: you will use it to link it from commits, branches and Merge Requests.</p>
+<h4>How to write a good issue</h4>
+<p>A good issue can be picked up by another person without having to ask you anything. To <strong>report a bug</strong>, use this structure:</p>
+<pre><code class="language-markdown">## What happens
+When sending the contact form without a date, a blank page appears.
+
+## Steps to reproduce
+1. Go to the contact page.
+2. Fill in name and email, leave the date empty.
+3. Press Send.
+
+## What should happen
+The message &quot;The date is required&quot; should appear.
+
+## Where
+Chrome browser, production version from October 8.
+
+## Screenshots
+(attach)</code></pre>
+<p>To <strong>request something new</strong>:</p>
+<pre><code class="language-markdown">## What is needed
+A date filter in the document search.
+
+## Why
+Users take a long time to find documents from the current month.
+
+## When we consider it done
+- [ ] You can choose a start and end date.
+- [ ] If no date is chosen, all results are shown.
+- [ ] It works on mobile.</code></pre>
+<p>That last section, <strong>when we consider it done</strong>, is the most valuable. It avoids the argument "I thought it also included…". The <code>- [ ]</code> boxes can be ticked directly in GitLab as you progress.</p>
+<h4>Templates so you don't start from scratch</h4>
+<p>If your team always uses the same structure, save it as a template. Create the folder <code>.gitlab/issue_templates/</code> in the repository and, inside it, one file per template, for example <code>Bug.md</code> and <code>New-feature.md</code>. When you create an issue, GitLab lets you choose it from a menu. The same works for Merge Requests in <code>.gitlab/merge_request_templates/</code>.</p>
+<h4>Working on an issue</h4>
+<ul><li><p><strong>Assign it to yourself</strong> before starting, so nobody does the same thing in parallel.</p></li><li><p><strong>Comment progress and questions on the issue</strong>, not in chat. That way there is a record for whoever comes later.</p></li><li><p><strong>Mention people</strong> with <code>@username</code> when you need their opinion.</p></li><li><p><strong>Close it</strong> when it is finished, or let it close on its own with the Merge Request (we see this below).</p></li></ul>
+<h3>Labels: classify to find</h3>
+<p><strong>Labels</strong> are colored tags you put on issues and Merge Requests to classify and filter them. They are created in <strong>Manage &gt; Labels</strong>.</p>
+<p>A simple set that works in many teams:</p>
+<table><thead><tr><th>Group</th><th>Labels</th></tr></thead><tbody><tr><td>Type</td><td><code>bug</code>, <code>new feature</code>, <code>improvement</code>, <code>documentation</code></td></tr><tr><td>Priority</td><td><code>high priority</code>, <code>medium priority</code>, <code>low priority</code></td></tr><tr><td>Status</td><td><code>to do</code>, <code>in progress</code>, <code>in review</code>, <code>blocked</code></td></tr><tr><td>Area</td><td><code>form</code>, <code>reports</code>, <code>database</code>, <code>server</code></td></tr></tbody></table>
+<p>Tips:</p>
+<ul><li><p><strong>Few and clear.</strong> With a hundred labels nobody knows which to use.</p></li><li><p><strong>One color per group.</strong> For example, reds for priority and blues for type. They can be read at a glance.</p></li><li><p><strong>Write a description</strong> for each label, so everyone uses it the same way.</p></li><li><p><strong>Agree on them as a team.</strong> Labels only work if everyone applies them with the same criteria.</p></li></ul>
+<p>With labels you can filter the issue list and answer questions like "which high-priority bugs are still open?" in two clicks.</p>
+<h3>Connecting commits, branches and Merge Requests to an issue</h3>
+<p>Here is the magic: GitLab links everything automatically if you mention the issue number.</p>
+<p><strong>In the branch name.</strong> Include the number, as you saw in chapter 4: <code>fix/42-empty-date-form</code>.</p>
+<p><strong>In the commit message.</strong> Add the reference:</p>
+<pre><code class="language-bash">git commit -m &quot;Validate required date in contact form (#42)&quot;</code></pre>
+<p>The commit will appear mentioned inside issue 42.</p>
+<p><strong>In the Merge Request description.</strong> Use a closing keyword:</p>
+<pre><code class="language-markdown">Closes #42</code></pre>
+<p>When the Merge Request is merged into the main branch, GitLab <strong>closes issue 42 automatically</strong>. <code>Fixes #42</code> and <code>Resolves #42</code> work too. If you only want to link it without closing it, write <code>Related to #42</code> or simply <code>#42</code>.</p>
+<p><strong>The most convenient shortcut: create the branch from the issue.</strong> Inside an issue you will see the <strong>Create merge request</strong> button (or <strong>Create branch</strong>). GitLab creates a branch with the issue's number and title, and a draft Merge Request already linked. You only need to bring it to your computer:</p>
+<pre><code class="language-bash">git fetch
+git switch 42-empty-date-form</code></pre>
+<p>The result is a complete, traceable chain: issue → branch → commits → Merge Request → closed issue.</p>
+<h3>Milestones: group work by deliveries</h3>
+<p>A <strong>milestone</strong> is a goal with a date: a version, a two-week cycle or a delivery to a client. It groups the issues and Merge Requests that must be ready by that date. It is created in <strong>Plan &gt; Milestones</strong>.</p>
+<p>Examples:</p>
+<ul><li><p><code>Version 1.5</code> — from November 1 to 15.</p></li><li><p><code>Sprint 23</code> — two weeks of work.</p></li><li><p><code>Reports module delivery</code> — for the date agreed with the user department.</p></li></ul>
+<p>When you open a milestone, GitLab shows a progress bar: how many issues are closed and how many are left. It is the fastest way to answer "are we going to make the date?".</p>
+<p>Tip: if a milestone has too many open issues close to its date, it is better to consciously move some to the next one than to pretend everything will get done.</p>
+<h3>Boards: see the work at a glance</h3>
+<p>A <strong>board</strong> shows issues as cards in columns, in Kanban style. You find it in <strong>Plan &gt; Issue boards</strong>.</p>
+<p>By default it has two columns, <strong>Open</strong> and <strong>Closed</strong>. You can add columns based on labels. A typical board:</p>
+<table><thead><tr><th>To do</th><th>In progress</th><th>In review</th><th>Closed</th></tr></thead><tbody><tr><td>#45 Date filter</td><td>#42 Empty date in form</td><td>#40 Phone in footer</td><td>#38 New logo</td></tr><tr><td>#47 Export to Excel</td><td></td><td></td><td></td></tr></tbody></table>
+<p>When you <strong>drag a card</strong> from one column to another, GitLab changes its label automatically. If you drag it to Closed, the issue closes.</p>
+<p>How to use it well:</p>
+<ul><li><p><strong>Review it together</strong> in the team meeting, instead of asking one by one "how is it going?".</p></li><li><p><strong>Limit what is "in progress".</strong> If one person has six cards in that column, something isn't working.</p></li><li><p><strong>Keep it up to date.</strong> An outdated board is worse than no board, because it misleads.</p></li><li><p><strong>Filter.</strong> You can view the board of a single milestone, a single person or a single label.</p></li></ul>
+<h3>The wiki: the project's memory</h3>
+<p>The <strong>wiki</strong> is a documentation space inside the project, with pages written in Markdown (chapter 13). It is under <strong>Plan &gt; Wiki</strong>.</p>
+<p>What usually goes in the wiki:</p>
+<ul><li><p>User guides for the people who use the product.</p></li><li><p>Team procedures: how to publish a version, how to handle an emergency.</p></li><li><p>Important decisions and their reasons.</p></li><li><p>The project glossary and contacts.</p></li><li><p>Minutes or summaries of technical meetings.</p></li></ul>
+<p>Creating a page is simple: <strong>New page</strong>, write the title, the content in Markdown and save. To link another wiki page, use <code>[text](page-name)</code>. Pages with names like <code>guides/installation</code> are organized into folders.</p>
+<p>A useful fact: inside, the wiki is <strong>another Git repository</strong>. It has a change history, and you can clone it and edit it on your computer. The address to clone it appears in the wiki itself.</p>
+<h4>Wiki or a <code>docs/</code> folder in the repository?</h4>
+<table><thead><tr><th></th><th>Wiki</th><th><code>docs/</code> folder</th></tr></thead><tbody><tr><td>How it is edited</td><td>From the browser, easy</td><td>With commits and Merge Requests</td></tr><tr><td>Review before publishing</td><td>No</td><td>Yes, like the code</td></tr><tr><td>Goes along with each version of the code</td><td>No</td><td>Yes</td></tr><tr><td>Ideal for</td><td>General guides, processes, team notes</td><td>Technical instructions that change with the code</td></tr></tbody></table>
+<p>Many teams use both: the wiki for general matters and <code>docs/</code> for what must stay in sync with each version of the system.</p>
+<blockquote><p><strong>Note about GitLab versions.</strong> Some advanced organization features (such as multiple boards per project, issue weights or epics) depend on the GitLab plan your organization uses. Everything in this chapter works on the free version, although the menus may vary a little.</p></blockquote>
+<blockquote><p><strong>On GitHub it is called…</strong> Issues and labels exist in the same way. Milestones too. Boards are called <em>Projects</em>. The wiki is in the <em>Wiki</em> tab. To close issues from a Pull Request you use the same words: <code>Closes #42</code>.</p></blockquote>
+<h3>Real example: from report to closure</h3>
+<p>A user reports by email that the form shows a blank page. Ana doesn't leave it in the email: she creates the issue <code>#42 Blank page when sending form without a date</code>, with the steps to reproduce it, the labels <code>bug</code> and <code>high priority</code>, and assigns it to the milestone <code>Version 1.5</code>.</p>
+<p>Luis assigns it to himself and moves it to <strong>In progress</strong> on the board. From the issue he presses <strong>Create merge request</strong>, brings the branch to his computer, fixes it and commits with <code>(#42)</code> in the message. The Merge Request already says <code>Closes #42</code>.</p>
+<p>Ana reviews, approves, and Luis merges. The issue closes on its own and the card moves to <strong>Closed</strong>. The next day, Ana replies to the user with the link to the issue. If someone asks in six months why that validation exists, everything is there: the report, the discussion, the change and the review.</p>
+<h3>Practical exercise</h3>
+<p>In your <code>practice-git</code> project:</p>
+<ol><li><p>Create four labels: <code>bug</code>, <code>improvement</code>, <code>documentation</code> and <code>in progress</code>, each with a color and a description.</p></li><li><p>Create a milestone called <code>Practice week 1</code> with a date seven days from now.</p></li><li><p>Create three issues: an invented bug (using the bug template), an improvement (with done criteria as checkboxes) and a documentation task. Assign them to the milestone and add labels.</p></li><li><p>Open the board and add the <code>in progress</code> column. Move an issue to that column and check that its label changed.</p></li><li><p>From the documentation issue, use <strong>Create merge request</strong>. Bring the branch to your computer, make a change to the README with a commit that mentions the issue, and publish it.</p></li><li><p>Check that the Merge Request description has <code>Closes #number</code>. Merge it and verify that the issue closed on its own and the milestone advanced.</p></li><li><p>Create a wiki page called <code>How we work</code> with your branch naming convention and commit message convention.</p></li><li><p>Challenge: create the folder <code>.gitlab/issue_templates/</code> with a template <code>Bug.md</code> and use it to create a new issue.</p></li></ol>
+<h3>Chapter checklist</h3>
+<ul><li data-checked="false"><p><input type="checkbox" disabled> I can create an issue with a clear title, description and done criteria.</p></li><li data-checked="false"><p><input type="checkbox" disabled> I use templates to report bugs and request new features.</p></li><li data-checked="false"><p><input type="checkbox" disabled> I assign the issue to myself before starting and comment progress on it.</p></li><li data-checked="false"><p><input type="checkbox" disabled> I know how to create and use labels with an agreed criterion.</p></li><li data-checked="false"><p><input type="checkbox" disabled> I link issues from branches, commits and Merge Requests.</p></li><li data-checked="false"><p><input type="checkbox" disabled> I use <code>Closes #number</code> to close issues automatically.</p></li><li data-checked="false"><p><input type="checkbox" disabled> I know how to create a branch and a Merge Request directly from an issue.</p></li><li data-checked="false"><p><input type="checkbox" disabled> I know how to create a milestone and read its progress.</p></li><li data-checked="false"><p><input type="checkbox" disabled> I know how to use the board, and I understand that moving cards changes labels.</p></li><li data-checked="false"><p><input type="checkbox" disabled> I know how to create wiki pages and when to use <code>docs/</code> instead.</p></li></ul>
+<h2>Chapter 9. CI/CD: Learn to Read the Traffic Light</h2>
+<p>CI/CD is a set of automatic checks and tasks that GitLab runs every time you publish changes. Its result is a traffic light: green if everything passed, red if something failed. In this book we <strong>will not configure or create pipelines</strong>. The goal of this chapter is for you to understand what they are, know how to read their result, and know what to do when something turns red.</p>
+<blockquote><p><strong>Important clarification.</strong> Configuring CI/CD is a full topic on its own and is usually done by someone with infrastructure experience. Here you will learn to <strong>recognize it and read it</strong>, which is what you need to work on a team that already uses it. You will not modify pipeline configuration files in any exercise.</p></blockquote>
+<h3>What CI/CD means</h3>
+<p>They are two related ideas:</p>
+<p><strong>CI: continuous integration.</strong> Every time someone publishes changes, an automatic system checks that the project still works: that it can be built, that the tests pass, that the code follows the team's rules. The idea is to detect errors <strong>in minutes</strong>, not days later.</p>
+<p><strong>CD: continuous delivery or deployment.</strong> When changes pass the checks, the system automatically prepares a version ready to publish (continuous delivery) or even publishes it to the server (continuous deployment).</p>
+<table><thead><tr><th></th><th>What it does</th><th>Who decides to publish</th></tr></thead><tbody><tr><td>Continuous integration</td><td>Checks every change automatically</td><td>Nobody publishes yet</td></tr><tr><td>Continuous delivery</td><td>Leaves a version ready to publish</td><td>A person presses the button</td></tr><tr><td>Continuous deployment</td><td>Publishes automatically</td><td>Nobody: if everything passes, it is published by itself</td></tr></tbody></table>
+<h3>A comparison: quality control</h3>
+<p>Think of a bread factory. Before a tray leaves for the store, it goes through several stations: the dough is checked, it is baked, the temperature is measured, it is packed and labeled. If one station detects a problem, the tray does not move on.</p>
+<p>A pipeline does the same with your code. Each station is an automatic check. If one fails, it stops and warns you. That way errors stay in the factory and don't reach the users.</p>
+<h3>What pipelines are for</h3>
+<p>A <strong>pipeline</strong> is the list of automatic tasks that run with your changes. The most common tasks:</p>
+<ul><li><p><strong>Building</strong> the project, to check that nothing was left broken.</p></li><li><p><strong>Running automatic tests</strong>, which verify that what worked still works.</p></li><li><p><strong>Checking the style</strong> of the code, according to the team's rules.</p></li><li><p><strong>Looking for security problems</strong>, such as passwords left in the code or libraries with known flaws.</p></li><li><p><strong>Publishing</strong> to a test or production server.</p></li></ul>
+<p>The benefit for you: you don't have to remember to check everything by hand before each Merge Request. And the team has a minimum guarantee that what enters <code>main</code> works.</p>
+<h3>How a pipeline is built</h3>
+<p>A pipeline is organized into <strong>stages</strong>, and each stage has one or more <strong>jobs</strong>:</p>
+<pre><code>Stage: build   →   Stage: test              →   Stage: publish
+  [compile]          [unit tests]                 [deploy to test]
+                     [style check]</code></pre>
+<ul><li><p>Stages run <strong>in order</strong>: if "test" fails, "publish" does not run.</p></li><li><p>The jobs of the same stage usually run <strong>at the same time</strong>.</p></li></ul>
+<p>The jobs are run by machines called <strong>runners</strong>. You don't need to know more about them for now: just that they are the "stations" where the work is done.</p>
+<h3>Where the configuration lives</h3>
+<p>All of this is defined in a file called <code>.gitlab-ci.yml</code>, at the root of the repository. If a project has that file, it has pipelines.</p>
+<p>Just so you recognize it if you see it, a very simple example:</p>
+<pre><code class="language-yaml">stages:
+  - test
+
+tests:
+  stage: test
+  script:
+    - echo &quot;Running tests&quot;</code></pre>
+<p>You don't need to understand or modify it. If one of your Merge Requests changes that file by accident, let the person responsible know before merging.</p>
+<h3>Where to see the result</h3>
+<p>GitLab shows you the pipeline status in several places:</p>
+<ol><li><p><strong>In the Merge Request.</strong> Below the description there is a box with the pipeline status. It is where you will look at it most.</p></li><li><p><strong>In the commit list.</strong> Each commit shows a small icon with its status.</p></li><li><p><strong>In the Build &gt; Pipelines menu.</strong> The complete list of all the project's pipelines, with date, branch, author and duration.</p></li><li><p><strong>On the project's main page</strong>, next to the last commit.</p></li></ol>
+<p>When you click a pipeline, you will see a diagram with its stages and jobs, each with its own status icon.</p>
+<h3>How to tell whether a pipeline passed or failed</h3>
+<table><thead><tr><th>Icon and status</th><th>Meaning</th><th>What to do</th></tr></thead><tbody><tr><td>Green, <strong>passed</strong></td><td>Everything passed</td><td>You can continue with the review and the merge</td></tr><tr><td>Red, <strong>failed</strong></td><td>At least one job failed</td><td>Don't merge. Check what failed</td></tr><tr><td>Blue, <strong>running</strong></td><td>It is running</td><td>Wait</td></tr><tr><td>Gray, <strong>pending</strong> / <strong>created</strong></td><td>Waiting for a free runner</td><td>Wait. If it takes long, let someone know</td></tr><tr><td>Orange, <strong>warning</strong></td><td>A job marked as "allowed to fail" failed</td><td>Review it, although it does not block</td></tr><tr><td>Crossed-out gray, <strong>canceled</strong></td><td>Someone canceled it</td><td>Run it again if needed</td></tr><tr><td><strong>skipped</strong></td><td>It did not run because an earlier stage failed</td><td>Fix the stage that failed</td></tr><tr><td><strong>manual</strong> (gear or play icon)</td><td>Waits for a person to start it</td><td>Only the person with that responsibility starts it</td></tr></tbody></table>
+<p>If the project is set up that way, GitLab <strong>won't let you merge</strong> a Merge Request with a red pipeline. It is a protection, not an obstacle.</p>
+<h3>What to do when a pipeline fails</h3>
+<p>A red pipeline is not a scolding: it is information. This is the process:</p>
+<p><strong>1. Identify which job failed.</strong> Open the pipeline and look for the job with the red X.</p>
+<p><strong>2. Read the log.</strong> Click the job to see its log: everything the machine wrote while working. <strong>The error is almost always at the end.</strong> Scroll to the last lines and look for words like <code>Error</code>, <code>FAILED</code> or <code>failed</code>, usually in red.</p>
+<p><strong>3. Relate it to your change.</strong> Ask yourself: what did I change that could have caused this? Often the message mentions a specific file or test.</p>
+<p><strong>4. Fix it on your branch.</strong> Make the fix, commit and push. The pipeline runs again automatically.</p>
+<p><strong>5. If it has nothing to do with your change</strong>, it may be a passing fault (for example, a network problem on the runner). You can retry the job with the <strong>Retry</strong> button. If it fails the same way again, it is not a passing fault.</p>
+<p><strong>6. If you don't understand the error, ask.</strong> Write in the Merge Request with the link to the failed job and mention the person responsible for the pipeline. Copying the last lines of the log into your message helps a lot.</p>
+<h4>What you should never do</h4>
+<ul><li><p><strong>Merge with the pipeline red</strong> "because it's surely nothing".</p></li><li><p><strong>Delete or disable a test</strong> so the pipeline passes.</p></li><li><p><strong>Modify <code>.gitlab-ci.yml</code></strong> to skip a check.</p></li><li><p><strong>Press Retry many times</strong>, hoping it passes by luck.</p></li></ul>
+<p>All these actions hide the problem instead of solving it, and the problem ends up reaching production.</p>
+<h3>What a green pipeline does and doesn't mean</h3>
+<p>A green pipeline means that <strong>the checks that exist</strong> passed. It does not mean the change is perfect. If the project has no tests for a certain part, an error there will not be detected by anyone.</p>
+<p>That is why the pipeline <strong>does not replace the human review</strong> from chapter 5. They are complementary: the machine checks what is repetitive and measurable; people check the logic, the clarity and whether the change really solves what was requested.</p>
+<blockquote><p><strong>On GitHub it is called…</strong> <em>GitHub Actions</em>. The configuration lives in the folder <code>.github/workflows/</code>. The traffic light works the same way: a green check or a red X next to each commit and in each Pull Request.</p></blockquote>
+<h3>Real example: the red that saved a release</h3>
+<p>Luis opens a Merge Request that changes the date format in a report. A few minutes later, the pipeline turns red.</p>
+<p>He opens the <code>tests</code> job and scrolls to the end of the log. He sees that a test called "monthly report shows correct totals" failed: the format change broke the way the report grouped months. Luis wouldn't have noticed by testing by hand, because he only checked the daily report screen.</p>
+<p>He fixes it, pushes, and the pipeline turns green. Ana reviews the logic and approves. The error never reached the people who use the report.</p>
+<h3>Practical exercise</h3>
+<p>Your practice project has no pipelines, and in this book we won't configure them. To practice reading them, use a public project:</p>
+<ol><li><p>Find an active open source project on GitLab.com and go to <strong>Build &gt; Pipelines</strong>.</p></li><li><p>Find one green pipeline and one red one. Note their branch, author and duration.</p></li><li><p>Open the red pipeline and identify which stage and which job failed.</p></li><li><p>Open the log of the failed job, scroll to the end and copy the line that explains the error. Try to describe in your own words what happened.</p></li><li><p>Check whether the later stages ended up as <strong>skipped</strong>.</p></li><li><p>Open a recent Merge Request of the project and find the pipeline box.</p></li><li><p>Look for the <code>.gitlab-ci.yml</code> file at the root of the repository and count how many stages it has. Just look at it.</p></li><li><p>Write a practice message (without publishing it) as if you were asking for help with a failed pipeline: which job failed, the link and the error lines.</p></li></ol>
+<h3>Chapter checklist</h3>
+<ul><li data-checked="false"><p><input type="checkbox" disabled> I can explain what continuous integration is and what continuous delivery or deployment is.</p></li><li data-checked="false"><p><input type="checkbox" disabled> I know what a pipeline, a stage and a job are.</p></li><li data-checked="false"><p><input type="checkbox" disabled> I know that the configuration lives in <code>.gitlab-ci.yml</code> and that I must not modify it without the person responsible.</p></li><li data-checked="false"><p><input type="checkbox" disabled> I find the pipeline status in the Merge Request, in the commits and in Build &gt; Pipelines.</p></li><li data-checked="false"><p><input type="checkbox" disabled> I recognize the statuses: passed, failed, running, pending, skipped, canceled and manual.</p></li><li data-checked="false"><p><input type="checkbox" disabled> I know how to read the log of a failed job starting from the end.</p></li><li data-checked="false"><p><input type="checkbox" disabled> I know what to do when it fails: fix it, retry if it is a passing fault, or ask for help.</p></li><li data-checked="false"><p><input type="checkbox" disabled> I never merge on red and never disable tests to get past them.</p></li><li data-checked="false"><p><input type="checkbox" disabled> I understand that a green pipeline does not replace human review.</p></li><li data-checked="false"><p><input type="checkbox" disabled> I understand that this book does not configure pipelines.</p></li></ul>
+<h2>Chapter 10. Security and Good Practices</h2>
+<p>A repository stores much more than code: it stores the work of a whole team and, sometimes, the entry door to important systems. This chapter covers the five protections every team should have: well-granted permissions, protected branches, secrets kept out of the repository, secure accounts, and a review before merging or publishing.</p>
+<h3>Why security starts in Git</h3>
+<p>Three real situations that repeat in many organizations:</p>
+<ul><li><p>Someone accidentally uploads a file with the database password. The repository is internal, but dozens of people can see it, and any cloned copy keeps it.</p></li><li><p>A person who no longer works at the organization still has access to the project months later.</p></li><li><p>An unreviewed change is merged straight into <code>main</code> and published, with a bug that takes the service down for users.</p></li></ul>
+<p>None of them requires a sophisticated attack. All of them are avoided with basic configuration and good habits.</p>
+<h3>Roles and permissions</h3>
+<p>In GitLab, each person who takes part in a project has a <strong>role</strong>. The role decides what they can see and what they can do. They are managed in <strong>Manage &gt; Members</strong>.</p>
+<table><thead><tr><th>Role</th><th>What it can do, in short</th><th>For whom</th></tr></thead><tbody><tr><td>Guest</td><td>See the project (depending on its visibility) and create issues</td><td>Users who report bugs</td></tr><tr><td>Reporter</td><td>Read the code, comment, manage issues</td><td>Analysts, managers who follow progress</td></tr><tr><td>Developer</td><td>Create branches, push, open Merge Requests</td><td>The team that develops</td></tr><tr><td>Maintainer</td><td>Merge on protected branches, configure the project</td><td>Technical leads, project owners</td></tr><tr><td>Owner</td><td>Full control, including deleting the project</td><td>Very few people</td></tr></tbody></table>
+<p>The exact names and details may vary depending on your organization's GitLab version, which may even have an additional role. The idea is the same everywhere.</p>
+<h4>The principle of least privilege</h4>
+<p><strong>Each person should have the minimum role they need for their work, and nothing more.</strong> Not because you distrust anyone, but because it reduces the possible damage from a mistake or a stolen account.</p>
+<p>Good practices with permissions:</p>
+<ul><li><p><strong>Don't give Maintainer "just in case".</strong> Start with Developer and raise the role when needed.</p></li><li><p><strong>Use expiration dates</strong> for temporary access: consultants, interns, one-off support. GitLab lets you set a date on which access is removed automatically.</p></li><li><p><strong>Review the member list periodically</strong>, for example every three months. Remove anyone who no longer participates.</p></li><li><p><strong>Remove access the same day</strong> someone leaves the organization or the project.</p></li><li><p><strong>Use groups</strong> when several projects share the same team. That way you manage permissions in one place.</p></li><li><p><strong>Never share accounts.</strong> Each person uses their own. Otherwise the history loses its meaning: you don't know who did what.</p></li></ul>
+<h3>Protected branches</h3>
+<p>A <strong>protected branch</strong> has special rules about who can change it and how. It is configured in <strong>Settings &gt; Repository &gt; Protected branches</strong>. In most projects, <code>main</code> comes protected by default.</p>
+<p>What you can define:</p>
+<table><thead><tr><th>Option</th><th>What it controls</th><th>Recommended setting for <code>main</code></th></tr></thead><tbody><tr><td>Allowed to merge</td><td>Who can merge Merge Requests</td><td>Maintainers</td></tr><tr><td>Allowed to push and merge</td><td>Who can push directly</td><td>Nobody (<em>No one</em>)</td></tr><tr><td>Allowed to force push</td><td>Whether history can be rewritten</td><td>Disabled</td></tr></tbody></table>
+<p>With that setting, the only way to change <code>main</code> is with a Merge Request that someone with permission merges. It is exactly the flow from chapters 4 and 5, but now it is mandatory, not just good intention.</p>
+<p>Other protections worth knowing:</p>
+<ul><li><p><strong>Required approvals.</strong> Requiring one or more people to approve before merging. Depending on your organization's GitLab plan, it may be mandatory or just informative.</p></li><li><p><strong>Successful pipeline to merge.</strong> In <strong>Settings &gt; Merge requests</strong>, the option <em>Pipelines must succeed</em> prevents merging on red (chapter 9).</p></li><li><p><strong>All threads resolved.</strong> The option <em>All threads must be resolved</em> prevents merging with pending comments.</p></li><li><p><strong>Protected tags.</strong> Just like branches, you can protect version tags (<code>v*</code>) so that only certain people can create them (chapter 13).</p></li></ul>
+<p>If you try to push directly to a protected branch, you will see an error like <code>You are not allowed to push code to protected branches</code>. It is not a failure: it is the protection working. Create a branch and open a Merge Request.</p>
+<h3>Never store secrets in the repository</h3>
+<p>A <strong>secret</strong> is any piece of data that gives access to something:</p>
+<ul><li><p>Passwords for databases, servers or services.</p></li><li><p>API tokens and keys.</p></li><li><p>Private SSH keys or certificates.</p></li><li><p>Email or cloud service credentials.</p></li><li><p>Connection strings that include a username and password.</p></li></ul>
+<h4>Why it is so serious</h4>
+<p>Remember that Git stores <strong>the whole history</strong>. If you upload a password and in the next commit you delete it, the password <strong>is still there</strong>, in the previous commit. Anyone who has a copy of the repository can find it with <code>git log -S</code> (chapter 12).</p>
+<p>Also:</p>
+<ul><li><p>Every person who cloned the project has a copy of that history.</p></li><li><p>Forks have it too.</p></li><li><p>In public repositories there are automated programs that constantly search the internet for exposed secrets. A published key can be used by third parties in very little time.</p></li></ul>
+<h4>How to keep them out</h4>
+<p><strong>1. Use environment variables and an ignored <code>.env</code> file.</strong> Secrets go in a local file, for example <code>.env</code>, which <strong>never</strong> enters the repository:</p>
+<pre><code># .env  (NOT uploaded)
+DB_PASSWORD=the-real-password
+API_TOKEN=the-real-token</code></pre>
+<p>And in <code>.gitignore</code>:</p>
+<pre><code>.env
+*.pem
+*.key</code></pre>
+<p><strong>2. Upload a template without real values.</strong> Create a <code>.env.example</code> with the variable names and example values, so the team knows what to configure:</p>
+<pre><code># .env.example  (YES, uploaded)
+DB_PASSWORD=write-the-password-here
+API_TOKEN=write-the-token-here</code></pre>
+<p><strong>3. For pipelines, use GitLab variables.</strong> The secrets the CI/CD needs are stored in <strong>Settings &gt; CI/CD &gt; Variables</strong>, marked as <em>Masked</em> (hidden in logs) and <em>Protected</em> (only available on protected branches). Usually the person responsible for the pipelines configures them.</p>
+<p><strong>4. Review before every commit.</strong> Here the rule from chapter 3 returns: <strong>look before you save.</strong> A <code>git status</code> and a <code>git diff --staged</code> catch most accidents. Be wary of any file you didn't expect to see.</p>
+<p><strong>5. Turn on automatic detection if your team can.</strong> There are tools that check every commit for secrets before they enter: GitLab's secret detection analysis in pipelines, or programs that run on your computer before each commit (called <em>pre-commit hooks</em>). Ask whether your team uses one.</p>
+<h4>If you uploaded a secret: what to do, in this order</h4>
+<ol><li><p><strong>Change or revoke the secret immediately.</strong> Change the password, revoke the token, generate a new key. This step is the only one that really protects you. Do it even if the repository is private, and even if you think nobody saw it.</p></li><li><p><strong>Notify the person responsible for security</strong> or your technical manager. No shame: it is a common accident, and reporting it quickly is the professional thing to do.</p></li><li><p><strong>Check whether the secret was used</strong>, with help from whoever manages that system (access logs, unusual activity).</p></li><li><p><strong>Remove the secret from the code</strong> with a new commit and move the value to <code>.env</code> or to GitLab variables.</p></li><li><p><strong>Cleaning up the history</strong> (deleting the secret from all old commits) is possible with specialized tools, but it rewrites the history of the whole team. Do it only with support from someone experienced, and remember that it <strong>does not replace step 1</strong>.</p></li></ol>
+<h3>Protect your account</h3>
+<p>Your GitLab account is the key to every project you take part in:</p>
+<ul><li><p><strong>Turn on two-step verification</strong> (2FA) in your profile, under <strong>Preferences &gt; Account</strong>. If someone obtains your password, they still won't be able to get in.</p></li><li><p><strong>Tokens with expiration and minimum permissions</strong> (chapter 2). Delete the ones you no longer use.</p></li><li><p><strong>Put a passphrase on your SSH key</strong> and never share the private key.</p></li><li><p><strong>Lock your computer</strong> when you step away. An open session is an open account.</p></li><li><p><strong>Be wary of emails asking for your credentials</strong>, even if they look like they come from GitLab. Always log in by typing the address yourself.</p></li></ul>
+<h3>What to check before merging</h3>
+<p>Whether you are merging your own Merge Request or someone else's:</p>
+<ul><li data-checked="false"><p><input type="checkbox" disabled> The source branch and the target branch are the right ones.</p></li><li data-checked="false"><p><input type="checkbox" disabled> The description explains what changes and why.</p></li><li data-checked="false"><p><input type="checkbox" disabled> I reviewed all the files in the <strong>Changes</strong> tab.</p></li><li data-checked="false"><p><input type="checkbox" disabled> There are no secrets, <code>.env</code> files, keys or personal data.</p></li><li data-checked="false"><p><input type="checkbox" disabled> There are no files unrelated to the task, temporary or test files.</p></li><li data-checked="false"><p><input type="checkbox" disabled> There are no forgotten <code>&lt;&lt;&lt;&lt;&lt;&lt;&lt;</code> conflict markers.</p></li><li data-checked="false"><p><input type="checkbox" disabled> The pipeline is green.</p></li><li data-checked="false"><p><input type="checkbox" disabled> All comments are addressed and the threads resolved.</p></li><li data-checked="false"><p><input type="checkbox" disabled> It has the required approvals.</p></li><li data-checked="false"><p><input type="checkbox" disabled> It does not modify <code>.gitlab-ci.yml</code> or sensitive settings without the knowledge of the person responsible.</p></li></ul>
+<h3>What to check before deploying</h3>
+<p>Publishing to production is the moment of greatest risk. Even if a designated person usually does it, it helps that the whole team knows the list:</p>
+<ul><li data-checked="false"><p><input type="checkbox" disabled> Everything to be published is merged into the right branch and has a green pipeline.</p></li><li data-checked="false"><p><input type="checkbox" disabled> There is a version tag and its notes (chapter 13).</p></li><li data-checked="false"><p><input type="checkbox" disabled> It is known exactly which changes go in, by comparing with the previous version (chapter 12).</p></li><li data-checked="false"><p><input type="checkbox" disabled> There is a plan to roll back if something fails: which version to restore and how.</p></li><li data-checked="false"><p><input type="checkbox" disabled> If there are database changes, a recent backup exists.</p></li><li data-checked="false"><p><input type="checkbox" disabled> A low-usage time was chosen and users are warned if there will be an interruption.</p></li><li data-checked="false"><p><input type="checkbox" disabled> Someone is available to check that everything works after publishing.</p></li><li data-checked="false"><p><input type="checkbox" disabled> Nothing is published on a Friday afternoon, except in emergencies. If something fails, nobody wants to fix it over the weekend.</p></li></ul>
+<h3>Good practices for teamwork</h3>
+<p>Technical security is of little use if the team has no clear agreements. These practices summarize the book:</p>
+<ol><li><p><strong>Nobody works directly on <code>main</code>.</strong> Branches for everything.</p></li><li><p><strong>Short branches.</strong> Days, not weeks.</p></li><li><p><strong>Small commits, with clear messages.</strong> One commit, one idea.</p></li><li><p><strong><code>git pull</code> when starting the day</strong> and before creating a branch.</p></li><li><p><strong>Every change goes through a Merge Request and review.</strong> Including urgent ones.</p></li><li><p><strong>Every task has its issue.</strong> Important conversations happen there, not in chat.</p></li><li><p><strong>Look before you save</strong> and before you merge.</p></li><li><p><strong>Comments about the code, not about the person.</strong></p></li><li><p><strong>Conflicts: understand both sides.</strong> Never delete the other person's work.</p></li><li><p><strong>What is published is not rewritten.</strong> It is corrected with a new commit.</p></li><li><p><strong>Secrets never enter the repository.</strong> And if they do, they are changed immediately.</p></li><li><p><strong>Document your agreements</strong> in the wiki: conventions for branches, commits and labels, and who to ask.</p></li></ol>
+<p>This last one is key. A new team doesn't need to guess its rules if they are written down.</p>
+<h3>Real example: the password uploaded on a Monday</h3>
+<p>Luis is setting up the connection to the test database and, in a hurry, commits the <code>config.py</code> file with the password written in it. He pushes to his branch and opens a Merge Request.</p>
+<p>Ana reviews the <strong>Changes</strong> tab and sees the password. She doesn't approve. She messages Luis privately and he acts in order: he asks the database administrator to change the password immediately, notifies the technical management, moves the configuration to environment variables with an ignored <code>.env</code> and a <code>.env.example</code>, and makes a new commit.</p>
+<p>Since the branch only existed in the internal project and the password had already been changed, the team decides with management how to clean up that branch's history. The incident was resolved within an hour. The next day, the team adds automatic secret detection to its improvement list and the <code>.env</code> rule to the wiki.</p>
+<h3>Practical exercise</h3>
+<p>In your <code>practice-git</code> project (you are Owner, so you can configure everything):</p>
+<ol><li><p>Go to <strong>Manage &gt; Members</strong> and review the roles. If you practice with someone, give them the <strong>Developer</strong> role with an expiration date.</p></li><li><p>In <strong>Settings &gt; Repository &gt; Protected branches</strong>, configure <code>main</code>: merge only by Maintainers, direct push <em>No one</em>, force push disabled.</p></li><li><p>Try to push directly to <code>main</code> from your computer and read the error. Then make the change through a branch and a Merge Request.</p></li><li><p>In <strong>Settings &gt; Merge requests</strong>, enable <em>All threads must be resolved</em>.</p></li><li><p>Create a <code>.env</code> file with an invented value, for example <code>TEST_KEY=12345</code>. Check that your <code>.gitignore</code> excludes it with <code>git status</code>. If it appears, add <code>.env</code> to <code>.gitignore</code>.</p></li><li><p>Create and upload a <code>.env.example</code> with the same variable and an example value.</p></li><li><p>Turn on two-step verification in your GitLab account.</p></li><li><p>Review your access tokens and delete the ones you don't use.</p></li><li><p>Write a wiki page <code>Team rules</code> with your 12 good practices, adapted to your way of working.</p></li></ol>
+<h3>Chapter checklist</h3>
+<ul><li data-checked="false"><p><input type="checkbox" disabled> I know the GitLab roles and apply the principle of least privilege.</p></li><li data-checked="false"><p><input type="checkbox" disabled> I know how to use expiration dates and periodically review members.</p></li><li data-checked="false"><p><input type="checkbox" disabled> I know how to protect <code>main</code>: no direct push and no force push.</p></li><li data-checked="false"><p><input type="checkbox" disabled> I know the options for successful pipeline and resolved threads before merging.</p></li><li data-checked="false"><p><input type="checkbox" disabled> I know what a secret is and why deleting it in a new commit is not enough.</p></li><li data-checked="false"><p><input type="checkbox" disabled> I use an ignored <code>.env</code> and a <code>.env.example</code> for configuration.</p></li><li data-checked="false"><p><input type="checkbox" disabled> I know what to do if I upload a secret: change it first, report it after.</p></li><li data-checked="false"><p><input type="checkbox" disabled> I have two-step verification turned on.</p></li><li data-checked="false"><p><input type="checkbox" disabled> I use the review checklist before merging.</p></li><li data-checked="false"><p><input type="checkbox" disabled> I know the review checklist before deploying.</p></li><li data-checked="false"><p><input type="checkbox" disabled> My team has its rules written down in the wiki.</p></li></ul>

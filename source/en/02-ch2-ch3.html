@@ -1,0 +1,223 @@
+<h2>Chapter 2. Set Up Your Computer</h2>
+<p>By the end of this chapter you will have Git installed, your identity configured, a secure connection to GitLab, and your first project downloaded. It is the most "technical" chapter in the book, but you only do it once. Go step by step and don't skip anything.</p>
+<h3>Step 1: open the terminal</h3>
+<p>The terminal is a window where you type orders and the computer carries them out. It looks like something from a hacker movie, but it is just another way of using your computer.</p>
+<table><thead><tr><th>System</th><th>How to open it</th></tr></thead><tbody><tr><td>Windows</td><td>After installing Git (step 2), search for <strong>Git Bash</strong> in the Start menu. Use that one.</td></tr><tr><td>Mac</td><td>Press Cmd + Space, type <strong>Terminal</strong> and press Enter.</td></tr><tr><td>Linux</td><td>Search for <strong>Terminal</strong> in your applications, or press Ctrl + Alt + T.</td></tr></tbody></table>
+<p>Three rules so you don't get scared:</p>
+<ul><li><p>You type the order and press <strong>Enter</strong> to run it.</p></li><li><p>If no message appears, it almost always means everything went well.</p></li><li><p>If you make a typing mistake, nothing happens: you get an error and you try again.</p></li></ul>
+<h3>Step 2: install Git</h3>
+<p><strong>On Windows.</strong> Go to git-scm.com, download Git for Windows and install it. You can accept the options that come selected by default. This also installs Git Bash, the terminal we will use.</p>
+<p><strong>On Mac.</strong> Open Terminal and type:</p>
+<pre><code class="language-bash">git --version</code></pre>
+<p>If Git is not installed, the Mac will offer to install the "command line tools". Accept and wait until it finishes. If you use Homebrew, you can also install it with <code>brew install git</code>.</p>
+<p><strong>On Linux (Ubuntu or Debian).</strong> Type:</p>
+<pre><code class="language-bash">sudo apt update
+sudo apt install git</code></pre>
+<p><strong>Check that it worked.</strong> On any system, type:</p>
+<pre><code class="language-bash">git --version</code></pre>
+<p>If you see something like <code>git version 2.x.x</code>, Git is ready. The exact number doesn't matter.</p>
+<h3>Step 3: tell Git who you are</h3>
+<p>Every commit you make will carry your name and your email. That way the team knows who made each change. This is configured only once:</p>
+<pre><code class="language-bash">git config --global user.name &quot;Your Name Surname&quot;
+git config --global user.email &quot;your-email@example.com&quot;</code></pre>
+<p>Use the <strong>same email you use on GitLab</strong>. That way GitLab recognizes your commits and links them to your profile.</p>
+<p>I recommend two more settings:</p>
+<pre><code class="language-bash">git config --global init.defaultBranch main
+git config --global core.editor &quot;nano&quot;</code></pre>
+<p>The first makes the main branch of your new projects be called <code>main</code>, which is the name used today. The second chooses a simple editor for when Git asks you to write something. If you use VS Code or Cursor, you can replace <code>nano</code> with <code>code --wait</code> or <code>cursor --wait</code>.</p>
+<p>To review what you configured:</p>
+<pre><code class="language-bash">git config --global --list</code></pre>
+<blockquote><p><strong>What does <code>--global</code> mean?</strong> It means the setting applies to all your projects on this computer. If you need a different email in a specific project (for example, your work one), go into that folder and repeat the command without <code>--global</code>.</p></blockquote>
+<h3>Step 4: connect your computer to GitLab</h3>
+<p>To send and bring in changes, GitLab needs to know that it is you. There are two ways to do it: HTTPS and SSH.</p>
+<table><thead><tr><th></th><th>HTTPS</th><th>SSH</th></tr></thead><tbody><tr><td>How it works</td><td>Username + a token (a special key)</td><td>A pair of keys stored on your computer</td></tr><tr><td>Difficulty at the start</td><td>Easier</td><td>A few more steps</td></tr><tr><td>Day to day</td><td>It may ask you for the token again</td><td>It doesn't ask you for anything else</td></tr><tr><td>When to use it</td><td>Networks that block SSH, or to start quickly</td><td>If you work every day: it is the recommended option</td></tr></tbody></table>
+<h4>Option A: HTTPS with a token</h4>
+<p>A <strong>personal access token</strong> is like a special password you create only for Git. You can give it an expiration date and delete it whenever you want, without changing your real password.</p>
+<ol><li><p>In GitLab, click your profile picture and go to <strong>Preferences</strong> (or <strong>Edit profile</strong>).</p></li><li><p>Look for <strong>Access tokens</strong>.</p></li><li><p>Create a new token. Give it a name like "My laptop", an expiration date, and check the permissions <code>read_repository</code> and <code>write_repository</code>.</p></li><li><p>Copy the token <strong>right then</strong>. GitLab will not show it to you again.</p></li><li><p>When Git asks for a password when cloning or pushing, paste the token instead of your password.</p></li></ol>
+<p>Store the token the way you store a password. Never paste it into a project file or into a chat.</p>
+<h4>Option B: SSH with keys (recommended)</h4>
+<p>SSH works with a <strong>pair of keys</strong>: a public one and a private one. Think of a padlock and its key. You give the padlock (the public key) to GitLab. The private key stays on your computer and you never share it. When you connect, GitLab checks that your key opens its padlock.</p>
+<p><strong>1. Create your keys:</strong></p>
+<pre><code class="language-bash">ssh-keygen -t ed25519 -C &quot;your-email@example.com&quot;</code></pre>
+<p>It will ask you a few questions. Press Enter to accept the default location. Then it will ask for a passphrase: it is optional, but recommended.</p>
+<p><strong>2. Copy your public key</strong> (the one that ends in <code>.pub</code>):</p>
+<pre><code class="language-bash">cat ~/.ssh/id_ed25519.pub</code></pre>
+<p>You will see a long line that starts with <code>ssh-ed25519</code>. Copy it in full.</p>
+<p><strong>3. Add it in GitLab:</strong> profile picture &gt; <strong>Preferences</strong> &gt; <strong>SSH Keys</strong> &gt; <strong>Add new key</strong>. Paste the key, give it a title like "My laptop" and save.</p>
+<p><strong>4. Check the connection:</strong></p>
+<pre><code class="language-bash">ssh -T git@gitlab.com</code></pre>
+<p>The first time it will ask whether you trust the server. Type <code>yes</code>. If you see a welcome message with your username, you are connected. If your organization has its own GitLab, replace <code>gitlab.com</code> with that server's address.</p>
+<blockquote><p><strong>Golden rule:</strong> the file that ends in <code>.pub</code> can be shared. The one that does <strong>not</strong> end in <code>.pub</code> is your private key and never leaves your computer. Not by email, not by chat, not inside a repository.</p></blockquote>
+<h3>Step 5: clone your first repository</h3>
+<p><strong>Cloning</strong> means downloading a project from GitLab to your computer, with its whole history. You do it once per project.</p>
+<ol><li><p>In GitLab, open the project.</p></li><li><p>Click the blue <strong>Code</strong> button (or <strong>Clone</strong>).</p></li><li><p>Copy the address under <strong>Clone with SSH</strong> (or the HTTPS one if you chose that option).</p></li><li><p>In the terminal, go to the folder where you keep your projects and clone:</p></li></ol>
+<pre><code class="language-bash">cd Documents
+git clone git@gitlab.com:your-username/practice-git.git</code></pre>
+<ol start="5"><li><p>Enter the project folder:</p></li></ol>
+<pre><code class="language-bash">cd practice-git</code></pre>
+<p>Done: you have the project on your computer. From now on, all Git commands run <strong>inside that folder</strong>.</p>
+<blockquote><p><strong>What does <code>cd</code> do?</strong> It means "change directory": it is like double-clicking a folder. <code>cd ..</code> takes you back to the previous folder. And <code>ls</code> (or <code>dir</code> on Windows without Git Bash) shows you what is in the current folder.</p></blockquote>
+<h3>Clone or start from scratch: <code>git clone</code> vs <code>git init</code></h3>
+<p>There are two ways to have a repository on your computer:</p>
+<table><thead><tr><th></th><th><code>git clone</code></th><th><code>git init</code></th></tr></thead><tbody><tr><td>What it does</td><td>Downloads a project that already exists on GitLab</td><td>Turns one of your folders into a new repository</td></tr><tr><td>Brings history</td><td>Yes, all of it</td><td>No, it starts empty</td></tr><tr><td>Already connected to GitLab</td><td>Yes</td><td>No, you have to connect it</td></tr><tr><td>When to use it</td><td>Almost always, when joining a project</td><td>When you start something from your computer</td></tr></tbody></table>
+<p>If you already have a folder with files and want to bring it to GitLab:</p>
+<pre><code class="language-bash">cd my-folder
+git init
+git add README.md
+git commit -m &quot;First commit of the project&quot;
+git remote add origin git@gitlab.com:your-username/my-folder.git
+git push -u origin main</code></pre>
+<p>Before the last step, create an <strong>empty</strong> project in GitLab (without a README) with that same name. <code>origin</code> is the nickname Git gives to the copy on GitLab. The <code>-u</code> is only used the first time: it tells Git that from now on, <code>git push</code> should always go to that place.</p>
+<p>To see which remote a project is connected to:</p>
+<pre><code class="language-bash">git remote -v</code></pre>
+<h3>Git inside your editor</h3>
+<p>If you use VS Code or Cursor, open the project folder (<strong>File &gt; Open Folder</strong>). You will see:</p>
+<ul><li><p>A branch icon in the side bar: it is the <strong>source control</strong> panel. Modified files appear there.</p></li><li><p>When you click a modified file, a side-by-side view opens with what changed.</p></li><li><p>At the bottom left, the name of the branch you are on.</p></li><li><p>A built-in terminal (<strong>Terminal &gt; New Terminal</strong>) that already opens inside the project folder. Very handy: you don't have to navigate with <code>cd</code>.</p></li></ul>
+<p>I recommend using the built-in terminal for the commands in this book and the visual panel to review changes. It is the best combination of both worlds.</p>
+<h3>If you use a work account and a personal one</h3>
+<p>This is very common: GitLab with your company email and GitHub with your personal email. So that each commit comes out with the right email:</p>
+<ol><li><p>Keep the email you use most as the global setting (step 3).</p></li><li><p>In each project that uses the other email, go into its folder and type:</p></li></ol>
+<pre><code class="language-bash">git config user.email &quot;other-email@example.com&quot;</code></pre>
+<p>Without <code>--global</code>, the change only applies to that project. Check with <code>git config user.email</code> inside the folder.</p>
+<p>For SSH you can use the same public key on GitLab and on GitHub. Just add it to both accounts.</p>
+<h3>Common problems and how to solve them</h3>
+<table><thead><tr><th>What you see</th><th>What it means</th><th>What to do</th></tr></thead><tbody><tr><td><code>git: command not found</code></td><td>Git is not installed, or the terminal can't find it</td><td>Install it again, then close and reopen the terminal</td></tr><tr><td><code>Permission denied (publickey)</code></td><td>GitLab does not recognize your SSH key</td><td>Check that you added the <code>.pub</code> key to your profile, and test with <code>ssh -T git@gitlab.com</code></td></tr><tr><td><code>Authentication failed</code></td><td>Wrong username or token (HTTPS)</td><td>Create a new token and use it instead of your password</td></tr><tr><td><code>Repository not found</code></td><td>The address is wrong or you don't have access</td><td>Copy the address again from the Code button and ask for access to the project</td></tr><tr><td><code>fatal: not a git repository</code></td><td>You are outside the project folder</td><td>Enter it with <code>cd project-name</code></td></tr><tr><td><code>destination path already exists</code></td><td>A folder with that name already exists</td><td>Clone to another location or rename the old folder</td></tr></tbody></table>
+<p><strong>A detail for Windows.</strong> Windows and Mac/Linux mark the end of each line of text differently. If you work in a mixed team, Git can show files as modified even though you didn't change anything. To avoid it, on Windows run this once:</p>
+<pre><code class="language-bash">git config --global core.autocrlf true</code></pre>
+<p>And on Mac or Linux:</p>
+<pre><code class="language-bash">git config --global core.autocrlf input</code></pre>
+<h3>Real example: the most common mistake in this chapter</h3>
+<p>You make your first commits and in GitLab they appear with a strange name, or without your profile picture. Almost always it is because the email configured in Git does not match the email on your GitLab account.</p>
+<p>Check it like this:</p>
+<pre><code class="language-bash">git config user.email</code></pre>
+<p>If it is not the right one, change it with the command from step 3. New commits will come out right. The old ones stay as they are, and that's fine.</p>
+<h3>Practical exercise</h3>
+<p>You will use this practice project throughout the book.</p>
+<ol><li><p>Install Git and check the version with <code>git --version</code>.</p></li><li><p>Configure your name and email, and review them with <code>git config --global --list</code>.</p></li><li><p>Set up SSH (or create a token if you prefer HTTPS) and test the connection.</p></li><li><p>In GitLab, create a new blank project called <code>practice-git</code>. Check the option <strong>Initialize repository with a README</strong>.</p></li><li><p>Clone it to your computer.</p></li><li><p>Enter the folder with <code>cd practice-git</code> and type <code>ls</code>. You should see the <code>README.md</code> file.</p></li></ol>
+<h3>Chapter checklist</h3>
+<ul><li data-checked="false"><p><input type="checkbox" disabled> I know how to open the terminal on my computer.</p></li><li data-checked="false"><p><input type="checkbox" disabled> Git is installed and <code>git --version</code> answers me.</p></li><li data-checked="false"><p><input type="checkbox" disabled> I set my name and the same email I use on GitLab.</p></li><li data-checked="false"><p><input type="checkbox" disabled> I understand the difference between HTTPS (token) and SSH (keys).</p></li><li data-checked="false"><p><input type="checkbox" disabled> I know the private key is never shared.</p></li><li data-checked="false"><p><input type="checkbox" disabled> I tested my connection to GitLab and it worked.</p></li><li data-checked="false"><p><input type="checkbox" disabled> I created and cloned my <code>practice-git</code> project.</p></li><li data-checked="false"><p><input type="checkbox" disabled> I know how to move between folders with <code>cd</code>.</p></li></ul>
+<h2>Chapter 3. Your First Cycle: Look Before You Save</h2>
+<p>Daily work with Git is a six-step cycle: review, choose, save, view the history, bring in, and publish. The most important rule of this chapter is simple: <strong>look before you save</strong>. If you learn it now, you will save yourself many headaches.</p>
+<h3>My story: saving everything without looking</h3>
+<p>When I learned Git on my own, with tutorials, I got stuck on a shortcut: saving everything at once. I changed things, typed the command to include everything, made the commit, and that was it. Fast and convenient.</p>
+<p>The problem showed up later. When I reviewed the history, I found commits that mixed things that had nothing to do with each other. There were changes I didn't want to save yet and files that should never have entered the project. And when I wanted to undo just one thing, I couldn't, because it was tangled up with everything else.</p>
+<p>From that I took the rule I repeat in every chapter: <strong>before saving, look at what you are saving.</strong> It takes ten seconds and saves you hours.</p>
+<h3>Git's three areas</h3>
+<p>To understand the cycle, imagine you are preparing a mail shipment:</p>
+<ol><li><p><strong>The work table</strong> (in Git: <em>working directory</em>). It is your folder, where you edit files. Everything is messy here, and that's fine.</p></li><li><p><strong>The open box</strong> (in Git: <em>staging area</em>). Here you put only what you want to send in this package. You can take things out and put them back in before you close it.</p></li><li><p><strong>The sealed, labeled package</strong> (in Git: <em>commit</em>). You closed the box and put a label on it saying what it contains. It is saved in your history.</p></li></ol>
+<p>And there is a fourth place: <strong>the post office</strong>, which is GitLab. The package doesn't get there until you send it with <code>push</code>.</p>
+<p>The open box exists precisely so that you can <strong>choose</strong> what to save. Skipping that step is what used to happen to me.</p>
+<h3>Step 1: <code>git status</code>, what is going on?</h3>
+<p>It is the command you will use most. It tells you the state of each file. Use it before and after every step, without fear: it only looks, it doesn't change anything.</p>
+<pre><code class="language-bash">git status</code></pre>
+<p>A typical answer:</p>
+<pre><code>On branch main
+Changes not staged for commit:
+        modified:   README.md
+
+Untracked files:
+        personal-notes.txt</code></pre>
+<p>Translated:</p>
+<ul><li><p><strong>On branch main</strong>: you are on the main branch.</p></li><li><p><strong>Changes not staged</strong>: you modified <code>README.md</code>, but it is not in the box yet.</p></li><li><p><strong>Untracked files</strong>: <code>personal-notes.txt</code> is a new file that Git is not tracking yet.</p></li></ul>
+<h3>Step 2: <code>git diff</code>, what exactly did I change?</h3>
+<pre><code class="language-bash">git diff</code></pre>
+<p>It shows you, line by line, what you changed and is not in the box yet. Lines with <code>-</code> were removed and lines with <code>+</code> were added:</p>
+<pre><code>- Hours: Monday to Friday, 8:00 to 4:00
++ Hours: Monday to Friday, 8:00 to 5:00</code></pre>
+<p>This is where you discover the change you didn't want, the extra space, or the test text you forgot to delete. To leave this view, press the <code>q</code> key.</p>
+<h3>Step 3: <code>git add</code>, choose what goes in the box</h3>
+<p>Add the files <strong>by name</strong>:</p>
+<pre><code class="language-bash">git add README.md</code></pre>
+<p>Look again with <code>git status</code>. Now you will see <code>README.md</code> in a new section, <strong>Changes to be committed</strong>: it is already in the box. And <code>personal-notes.txt</code> stays out, as you wanted.</p>
+<p>If you want to review what is already in the box before closing it:</p>
+<pre><code class="language-bash">git diff --staged</code></pre>
+<blockquote><p><strong>About <code>git add .</code></strong> This command puts <strong>everything</strong> that changed in the folder into the box. It is not forbidden, but use it only after looking at <code>git status</code> and being sure that everything that appears should go in. That was my mistake: using it without looking.</p></blockquote>
+<p>Did you put something in the box by mistake? Take it out without losing the change:</p>
+<pre><code class="language-bash">git restore --staged personal-notes.txt</code></pre>
+<h3>Step 4: <code>git commit</code>, close and label the package</h3>
+<pre><code class="language-bash">git commit -m &quot;Update opening hours to 5:00 p.m.&quot;</code></pre>
+<p>The text in quotes is the <strong>commit message</strong>. It is the note your teammates will read, and you yourself will read six months from now.</p>
+<h4>How to write clear commits</h4>
+<p>A good message answers the question: <strong>what does this change do?</strong></p>
+<table><thead><tr><th>Confusing message</th><th>Clear message</th></tr></thead><tbody><tr><td><code>changes</code></td><td><code>Fix contact phone number on the home page</code></td></tr><tr><td><code>misc fixes</code></td><td><code>Fix error when saving a form without a date</code></td></tr><tr><td><code>works now!!!</code></td><td><code>Validate that the email has the correct format</code></td></tr><tr><td><code>update</code></td><td><code>Update installation instructions in the README</code></td></tr></tbody></table>
+<p>Five simple rules:</p>
+<ol><li><p>Start with a verb: <em>Add, Fix, Update, Remove, Improve</em>.</p></li><li><p>Be specific: say what you changed and where.</p></li><li><p>Keep it short: one line of under 70 characters.</p></li><li><p><strong>One commit, one idea.</strong> If your message needs the word "and" for two different things, they should probably be two commits.</p></li><li><p>If the reason is not obvious, explain the why. Use <code>git commit</code> without <code>-m</code> so the editor opens, and write a summary line, a blank line, and then the details.</p></li></ol>
+<h3>Step 5: <code>git log</code>, view the history</h3>
+<pre><code class="language-bash">git log --oneline</code></pre>
+<p>It shows one commit per line, from newest to oldest:</p>
+<pre><code>a3f9c21 Update opening hours to 5:00 p.m.
+7b2e104 Add contact section
+1c8d3aa Initial commit</code></pre>
+<p>That code at the start (<code>a3f9c21</code>) is the unique identifier of each commit. You will use it later to go back or review changes. Without <code>--oneline</code> you will also see the author and the date. Press <code>q</code> to exit.</p>
+<h3>Step 6: <code>git pull</code> and <code>git push</code>, bring in and publish</h3>
+<p>Before publishing, <strong>always bring in what is new from the team</strong>:</p>
+<pre><code class="language-bash">git pull</code></pre>
+<p>This downloads the changes others published and combines them with yours. If nobody changed anything, it will tell you <code>Already up to date</code>.</p>
+<p>Now yes, publish:</p>
+<pre><code class="language-bash">git push</code></pre>
+<p>Your commits travel to GitLab. Open the project in the browser and you will see your message in the list of commits.</p>
+<blockquote><p><strong>Why pull before push?</strong> If someone published something after your last pull, GitLab will reject your push with an error message. It is not serious: run <code>git pull</code> and try again. But it is cleaner to do it beforehand.</p></blockquote>
+<h3 id="gitignore-what-must-never-enter"><code>.gitignore</code>: what must never enter</h3>
+<p>There are files that should never be saved in the repository: files with passwords or keys, folders that are generated automatically, system temporary files, or your personal notes.</p>
+<p>That is what <code>.gitignore</code> is for: a text file at the root of the project with the list of things Git must ignore. Example:</p>
+<pre><code># Configuration with sensitive data
+.env
+
+# System files
+.DS_Store
+Thumbs.db
+
+# Personal notes
+personal-notes.txt
+
+# Folders generated automatically
+node_modules/
+__pycache__/</code></pre>
+<p>Anything listed in <code>.gitignore</code> stops appearing in <code>git status</code>. That way you can't add it by accident, not even with <code>git add .</code>.</p>
+<p>Careful: <code>.gitignore</code> only works with files that have <strong>not yet</strong> been saved. If a file already entered a commit, adding it to <code>.gitignore</code> later does not remove it from the history. That is why it is best to create it at the start of the project. And if you ever push a password, change it immediately: we cover this in chapter 10.</p>
+<h3>Cycle summary</h3>
+<pre><code class="language-bash">git status                 # 1. What changed?
+git diff                   # 2. What exactly did I change?
+git add file               # 3. I choose what goes in
+git diff --staged          #    I review the box
+git commit -m &quot;Message&quot;    # 4. I save with a good message
+git log --oneline          # 5. I look at the history
+git pull                   # 6. I bring in what is new
+git push                   #    I publish</code></pre>
+<h3>Choosing parts of a file: <code>git add -p</code></h3>
+<p>Sometimes you changed two different things in the <strong>same file</strong>: a correction and a test. With <code>git add file</code> both would go in. To choose piece by piece:</p>
+<pre><code class="language-bash">git add -p README.md</code></pre>
+<p>Git shows you each block of changes and asks what to do. The answers you will use most:</p>
+<ul><li><p><code>y</code> (yes): this block goes into the box.</p></li><li><p><code>n</code> (no): this block stays out.</p></li><li><p><code>q</code> (quit): ends without reviewing the rest.</p></li><li><p><code>?</code> (help): shows all the options.</p></li></ul>
+<p>It is the perfect tool to follow the "one commit, one idea" rule. In VS Code and Cursor you can do the same with the mouse: select lines in the changes view and choose <strong>Stage Selected Ranges</strong>.</p>
+<h3>Viewing a commit in detail: <code>git show</code></h3>
+<pre><code class="language-bash">git show a3f9c21</code></pre>
+<p>It shows the author, the date, the message, and exactly which lines that commit changed. If you don't give a code, it shows the last commit. It is useful to answer "what did I do yesterday?" or "what did Ana change in that commit?".</p>
+<p>Other uses of <code>git log</code> that will help you:</p>
+<pre><code class="language-bash">git log --oneline -5              # Only the last 5 commits
+git log --oneline --author=&quot;Ana&quot;  # Only Ana's commits
+git log --oneline -- README.md    # Only the commits that touched that file</code></pre>
+<h3>I made a mistake in the last commit (and I haven't pushed)</h3>
+<p>If you wrote the message wrong or forgot to add a file, you can <strong>fix the last commit</strong>:</p>
+<pre><code class="language-bash">git add forgotten-file.txt
+git commit --amend -m &quot;Corrected message&quot;</code></pre>
+<blockquote><p><strong>Warning:</strong> use <code>--amend</code> only if you <strong>have not pushed yet</strong>. If you already published the commit, correcting it this way changes the history your teammates already downloaded and causes them problems. In that case, make a new commit with the correction.</p></blockquote>
+<h3>How often should I commit?</h3>
+<p>There is no magic number, but these signals help:</p>
+<ul><li><p><strong>Commit when you finish a complete idea</strong>, even a small one: you fixed a mistake, added a section, changed a text.</p></li><li><p><strong>Commit before something risky</strong>, like reorganizing folders. If it goes wrong, you return to that point.</p></li><li><p><strong>Don't wait for days.</strong> If you have gone a week without a commit, you have too many mixed changes and they will be hard to explain or undo.</p></li><li><p><strong>Don't commit something broken</strong> to the main branch. If you need to save something half-finished, do it on your own branch (chapter 4).</p></li></ul>
+<p>A good test: if you can describe the change in one clear line, it is a good time to commit.</p>
+<h3>Common cycle errors and how to get out of them</h3>
+<table><thead><tr><th>What you see</th><th>What happened</th><th>What to do</th></tr></thead><tbody><tr><td><code>nothing to commit, working tree clean</code></td><td>There are no unsaved changes</td><td>Nothing, everything is saved. If you expected changes, check that you saved the file in your editor</td></tr><tr><td><code>nothing added to commit</code></td><td>You committed without adding anything to the box</td><td>Use <code>git add</code> first</td></tr><tr><td><code>rejected ... fetch first</code> when pushing</td><td>Someone published before you</td><td>Run <code>git pull</code> and then <code>git push</code></td></tr><tr><td>A strange screen opened when committing</td><td>Git opened an editor for the message</td><td>In nano: type, Ctrl + O, Enter, Ctrl + X. In Vim: press <code>i</code>, type, then Esc, <code>:wq</code> and Enter</td></tr><tr><td><code>Your branch is ahead of &#39;origin/main&#39; by 2 commits</code></td><td>You have unpublished commits</td><td>Run <code>git push</code></td></tr><tr><td><code>Your branch is behind &#39;origin/main&#39;</code></td><td>There are new changes on GitLab</td><td>Run <code>git pull</code></td></tr></tbody></table>
+<h3>The same cycle from VS Code or Cursor</h3>
+<p>Everything in this chapter can also be done with buttons:</p>
+<ol><li><p>Open the source control panel. That is your <code>git status</code>: the list of changed files.</p></li><li><p>Click a file to see its <code>git diff</code> side by side.</p></li><li><p>Press the <strong>+</strong> next to the file to put it in the box (<code>git add</code>).</p></li><li><p>Write the message at the top and press <strong>Commit</strong>.</p></li><li><p>Press <strong>Sync Changes</strong> or the arrow buttons to pull and push.</p></li></ol>
+<p>Be careful with the commit button when nothing is in the box: some editors offer to save <strong>all</strong> changes at once. It is the equivalent of <code>git add .</code> without looking. Read the message before accepting.</p>
+<h3>Real example: a clean commit versus a tangled one</h3>
+<p>Luis fixes a bug in the contact form. Meanwhile, he also changes some colors to test and leaves a test file in the folder.</p>
+<p><strong>Tangled commit.</strong> Luis uses <code>git add .</code> and writes <code>git commit -m &quot;fixes&quot;</code>. Everything goes in together: the correction, the test colors and the junk file. Two weeks later, the team wants to undo the colors. They can't do it without also undoing the correction.</p>
+<p><strong>Clean commit.</strong> Luis looks at <code>git status</code> and <code>git diff</code>. He sees the three changes. He adds only the form file and runs <code>git commit -m &quot;Fix email validation in the contact form&quot;</code>. He discards the test colors and adds the test file to <code>.gitignore</code>. The history is clear and each change can be undone separately.</p>
+<h3>Practical exercise</h3>
+<p>Use your <code>practice-git</code> project.</p>
+<ol><li><p>Open <code>README.md</code> and add a line with your name and today's date.</p></li><li><p>Create a new file called <code>personal-notes.txt</code> with any text.</p></li><li><p>Run <code>git status</code> and explain in your own words what you see.</p></li><li><p>Run <code>git diff</code> and find your new line with the <code>+</code>.</p></li><li><p>Create a <code>.gitignore</code> file and write <code>personal-notes.txt</code> inside it. Run <code>git status</code> again: your notes should no longer appear.</p></li><li><p>Add <code>README.md</code> and <code>.gitignore</code> by name. Review the box with <code>git diff --staged</code>.</p></li><li><p>Make a commit with a clear message, for example: <code>Add my name to the README and ignore personal notes</code>.</p></li><li><p>Run <code>git log --oneline</code>, then <code>git pull</code> and <code>git push</code>.</p></li><li><p>Open GitLab in the browser and find your commit in the history.</p></li></ol>
+<h3>Chapter checklist</h3>
+<ul><li data-checked="false"><p><input type="checkbox" disabled> I use <code>git status</code> before and after each step.</p></li><li data-checked="false"><p><input type="checkbox" disabled> I review my changes with <code>git diff</code> before saving them.</p></li><li data-checked="false"><p><input type="checkbox" disabled> I add files by name, and only use <code>git add .</code> after looking.</p></li><li data-checked="false"><p><input type="checkbox" disabled> I know how to take a file out of the box with <code>git restore --staged</code>.</p></li><li data-checked="false"><p><input type="checkbox" disabled> I write commit messages that start with a verb and say what changes.</p></li><li data-checked="false"><p><input type="checkbox" disabled> I make one commit per idea.</p></li><li data-checked="false"><p><input type="checkbox" disabled> I run <code>git pull</code> before <code>git push</code>.</p></li><li data-checked="false"><p><input type="checkbox" disabled> I have a <code>.gitignore</code> and I know what it is for.</p></li><li data-checked="false"><p><input type="checkbox" disabled> I published my first change and saw it in GitLab.</p></li></ul>

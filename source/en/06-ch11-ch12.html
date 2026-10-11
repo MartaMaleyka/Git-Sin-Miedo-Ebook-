@@ -1,0 +1,235 @@
+<h2>Chapter 11. Git with an Agent: You Decide, the AI Executes</h2>
+<p>An AI agent or a script can do the repetitive parts of Git for you: pulling changes, preparing commits, publishing them and opening Merge Requests. Used well, it saves you time and mistakes. Used badly, it can publish something nobody reviewed. The rule of this chapter is the one in the title: <strong>automation executes, but you make the decisions.</strong></p>
+<h3>My workflow</h3>
+<p>I work this way every day: I use Claude to plan the change, Cursor to run it on the code, and <strong>I review every commit before I push</strong>. The AI proposes and writes. I read, understand, correct and decide what gets published.</p>
+<p>That last step is not optional. An agent can write code that looks right and isn't, touch files you didn't ask for, or solve a problem in a way that doesn't fit the rest of the project. If you publish without looking, the person responsible for the change is still you, not the tool.</p>
+<p>That is why this chapter is at the end of the book, and not at the beginning. To supervise an agent you need to understand everything before: what each command does, how to read a diff, when there is a conflict and how to undo a mistake.</p>
+<h3>What can be automated and what cannot</h3>
+<table><thead><tr><th>Task</th><th>Can it be automated?</th><th>Condition</th></tr></thead><tbody><tr><td>Checking which branch and state you are in</td><td>Yes</td><td>It should always be done before any action</td></tr><tr><td><code>git pull</code> to bring in changes</td><td>Yes</td><td>Stops if a conflict appears</td></tr><tr><td>Creating a branch with the right name</td><td>Yes</td><td>Following the team's convention</td></tr><tr><td>Proposing the commit message</td><td>Yes</td><td>You read it and approve or correct it</td></tr><tr><td>Making the commit</td><td>Yes</td><td>After you see the diff and confirm</td></tr><tr><td><code>git push</code> to your branch</td><td>Yes</td><td>After your confirmation, never to <code>main</code></td></tr><tr><td>Opening a Merge Request with a description</td><td>Yes</td><td>You review the text before asking for review</td></tr><tr><td>Resolving conflicts</td><td><strong>No</strong></td><td>Requires understanding both sides (chapter 6)</td></tr><tr><td>Merging into a protected branch</td><td><strong>No</strong></td><td>A person decides, after review</td></tr><tr><td>Approving a Merge Request</td><td><strong>No</strong></td><td>Review is human (chapter 5)</td></tr><tr><td><code>push --force</code>, <code>reset --hard</code>, deleting branches</td><td><strong>No</strong></td><td>Actions that can destroy work</td></tr><tr><td>Handling secrets</td><td><strong>No</strong></td><td>Passwords are never handed to an agent</td></tr></tbody></table>
+<h3>The five rules of safe automation</h3>
+<h4 id="1-validate-before-acting">1. Validate before acting</h4>
+<p>Before any command, the automation checks:</p>
+<ul><li><p>That it is inside a Git repository.</p></li><li><p>Which branch it is on, and that it is <strong>not</strong> <code>main</code> or another protected branch.</p></li><li><p>That there is no half-done merge or conflict.</p></li><li><p>Which files changed, and whether any look suspicious (<code>.env</code>, keys, huge files).</p></li></ul>
+<p>If something doesn't add up, it <strong>stops and warns you</strong>. It never "fixes it" on its own.</p>
+<h4 id="2-preview-and-confirmation">2. Preview and confirmation</h4>
+<p>Before committing, pushing or opening a Merge Request, the automation shows you <strong>exactly</strong> what it is going to do:</p>
+<ul><li><p>The list of files and the diff.</p></li><li><p>The proposed commit message.</p></li><li><p>The branch it is going to publish to.</p></li></ul>
+<p>And it waits for you to confirm explicitly. A "yes" typed by you, not a "continue automatically".</p>
+<h4 id="3-mandatory-human-review-at-critical-points">3. Mandatory human review at critical points</h4>
+<p>There are three moments when the automation <strong>always stops</strong> and hands control back to you:</p>
+<ul><li><p><strong>Conflicts.</strong> It tells you which files clash, and you resolve them.</p></li><li><p><strong>Protected branches.</strong> It never pushes or merges to them.</p></li><li><p><strong>Merge Requests.</strong> It can open them, but review, approval and merging belong to people.</p></li></ul>
+<h4 id="4-log-of-every-command-and-result">4. Log of every command and result</h4>
+<p>Every action is recorded in a log file: date, project, branch, command and result. That way you can audit what the automation did and, if something went wrong, know exactly what to revert (chapter 7). A log like this one:</p>
+<pre><code>2026-10-08 10:42:11 | practice-git | git pull (branch feature/about-me) | ok
+2026-10-08 10:43:02 | practice-git | commit a3f9c21: Add about me section | ok
+2026-10-08 10:43:05 | practice-git | push to origin/feature/about-me | ok</code></pre>
+<p>With the commit code (<code>a3f9c21</code>) you can run <code>git show</code> to review it or <code>git revert</code> to cancel it.</p>
+<h4 id="5-least-privilege">5. Least privilege</h4>
+<p>The automation uses your credentials with just the right permissions: it can write to branches, but not merge into <code>main</code> (that is what the protected branches of chapter 10 are for). If you use a token for it, give it an expiration date and only the permissions it needs.</p>
+<h3 id="option-a-a-simple-script-with-confirmation">Option A: a simple script with confirmation</h3>
+<p>A script is a list of commands saved in a file that runs in one go. It isn't clever: it always does the same thing. That is exactly why it is predictable.</p>
+<p>This script applies the five rules. It takes what <strong>you</strong> put in the box with <code>git add</code>, shows it to you, looks for sensitive files, asks for the message and the confirmation, commits and pushes to your branch, and logs everything:</p>
+<pre><code class="language-bash">#!/usr/bin/env bash
+# publish.sh: saves and publishes what is in the box, with human review
+set -euo pipefail
+
+LOG=&quot;$HOME/.git-assistant.log&quot;
+log() { echo &quot;$(date &#39;+%Y-%m-%d %H:%M:%S&#39;) | $(basename &quot;$PWD&quot;) | $*&quot; | tee -a &quot;$LOG&quot;; }
+
+# 1. Validate: repository, branch and state
+if ! git rev-parse --is-inside-work-tree &gt;/dev/null 2&gt;&amp;1; then
+  echo &quot;You are not inside a Git repository.&quot;; exit 1
+fi
+
+BRANCH=$(git branch --show-current)
+if [[ -z &quot;$BRANCH&quot; || &quot;$BRANCH&quot; == &quot;main&quot; || &quot;$BRANCH&quot; == &quot;master&quot; ]]; then
+  echo &quot;You are on &#39;$BRANCH&#39;. Create a branch before publishing.&quot;; exit 1
+fi
+
+if [[ -f &quot;$(git rev-parse --git-dir)/MERGE_HEAD&quot; ]]; then
+  echo &quot;There is a half-done merge. Resolve it first (chapter 6).&quot;; exit 1
+fi
+
+# 2. Bring in changes from GitLab if the branch is already published
+if git rev-parse --abbrev-ref &#39;@{u}&#39; &gt;/dev/null 2&gt;&amp;1; then
+  if git pull --no-rebase; then
+    log &quot;git pull (branch $BRANCH) | ok&quot;
+  else
+    log &quot;git pull (branch $BRANCH) | conflict or error, stopping&quot;
+    echo &quot;There are conflicts or errors. Resolve them yourself and run it again.&quot;; exit 1
+  fi
+fi
+
+# 3. Preview of what is going to be saved
+if git diff --cached --quiet; then
+  echo &quot;Nothing is in the box. Use git add with the files you want to save.&quot;; exit 1
+fi
+echo &quot;===== Files to be saved =====&quot;
+git --no-pager diff --cached --stat
+echo &quot;===== Changes =====&quot;
+git --no-pager diff --cached
+
+# 4. Alert for sensitive files
+if git diff --cached --name-only | grep -Eiq &#39;(^|/)\.env$|\.pem$|\.key$|id_rsa|id_ed25519&#39;; then
+  log &quot;ALERT: sensitive file in the box, stopping&quot;
+  echo &quot;Some files look like secrets. Take them out of the box (chapter 10).&quot;; exit 1
+fi
+
+# 5. Message and human confirmation
+read -r -p &quot;Commit message: &quot; MSG
+if [[ -z &quot;$MSG&quot; ]]; then echo &quot;The message cannot be empty.&quot;; exit 1; fi
+
+read -r -p &quot;Save and publish to &#39;$BRANCH&#39;? Type yes to confirm: &quot; OK
+if [[ &quot;$OK&quot; != &quot;yes&quot; ]]; then log &quot;cancelled by the person&quot;; echo &quot;Cancelled.&quot;; exit 0; fi
+
+git commit -m &quot;$MSG&quot;
+log &quot;commit $(git rev-parse --short HEAD): $MSG | ok&quot;
+
+git push -u origin &quot;$BRANCH&quot;
+log &quot;push to origin/$BRANCH | ok&quot;
+
+echo &quot;Done. Open or review the Merge Request in GitLab. A person decides the merge.&quot;</code></pre>
+<p>How to use it:</p>
+<ol><li><p>Save the text in a file <code>publish.sh</code>, in a folder outside your projects (for example, <code>~/scripts/</code>).</p></li><li><p>Give it execution permission once: <code>chmod +x ~/scripts/publish.sh</code>.</p></li><li><p>In your project, look and choose your changes as usual: <code>git status</code>, <code>git diff</code>, <code>git add file</code>.</p></li><li><p>Run <code>~/scripts/publish.sh</code> and follow the questions.</p></li><li><p>Review the log whenever you like: <code>cat ~/.git-assistant.log</code>.</p></li></ol>
+<p>Notice what the script does <strong>not</strong> do: it doesn't pick files for you, doesn't merge, doesn't resolve conflicts, doesn't force anything and doesn't touch <code>main</code>. Those decisions are still yours. On Windows, run it from Git Bash.</p>
+<h3 id="option-b-an-ai-agent-with-clear-rules">Option B: an AI agent with clear rules</h3>
+<p>An AI agent, like the ones built into editors such as Cursor or into coding assistants, is more flexible than a script: it understands instructions in natural language ("add a date filter and push it to a branch"), writes code and runs commands. That flexibility is exactly what demands more control.</p>
+<h4 id="give-it-written-rules">Give it written rules</h4>
+<p>Most agents let you leave permanent instructions in a file in the project (depending on the tool, it may be called <code>AGENTS.md</code>, an editor rules file or another name its documentation indicates). The agent reads those instructions before working. An example you can adapt:</p>
+<pre><code class="language-markdown"># Rules for working with Git in this project
+
+## Before acting
+- Run git status and tell me which branch you are on and what changed.
+- Never work on main. If you are on main, create a branch with the format
+  type/number-description (for example fix/42-empty-date) and ask me to confirm.
+- Run git pull before starting.
+
+## Commits
+- One commit per idea. Message in English, starting with a verb.
+- Before each commit, show me the diff and the proposed message, and wait for my &quot;yes&quot;.
+- Never add .env files, keys, credentials or files outside the task.
+
+## Publishing
+- Only push to the working branch, never to main or protected branches.
+- Before pushing, ask me for confirmation.
+- You can draft the Merge Request description, but do not merge it.
+
+## Forbidden without my explicit authorization
+- git push --force, git reset --hard, git clean, deleting branches.
+- Resolving conflicts: if one appears, stop and tell me which files clash.
+- Modifying .gitlab-ci.yml or the project configuration.
+
+## Log
+- When you finish, give me the list of commands you ran and their results.</code></pre>
+<h4 id="how-to-ask-for-things">How to ask for things</h4>
+<p>A good request to the agent describes <strong>what</strong> you want and <strong>what the limits are</strong>:</p>
+<blockquote><p>"Add required date validation to the contact form, for issue #42. Work on a new branch. When you finish, show me the diff and the commit message before saving. Don't push without my confirmation."</p></blockquote>
+<p>Compare that with "fix the form and push it". The first makes the scope, the branch and the checkpoints clear. The second gives the agent too much freedom.</p>
+<h4 id="review-what-the-agent-did">Review what the agent did</h4>
+<p>When the agent shows you the diff, read it as if a new colleague wrote it on their first day (chapter 5):</p>
+<ul><li><p>Did it do only what you asked, or did it touch other files?</p></li><li><p>Do you understand every line that changed? If you don't, don't approve it: ask it to explain.</p></li><li><p>Does it work? Test it yourself, don't rely on "the agent says it works".</p></li><li><p>Does the commit message describe the change well?</p></li><li><p>Is there anything that looks like a secret, personal data or a temporary file?</p></li></ul>
+<p>If something doesn't convince you, ask for the change or make it yourself. Approving without understanding is exactly the "save everything without looking" mistake of chapter 3, only faster.</p>
+<h3 id="what-you-must-understand-even-when-it-is-automated">What you must understand even when it is automated</h3>
+<p>Automation doesn't free you from knowing Git. It frees you from <strong>typing</strong> the commands, not from <strong>understanding</strong> them. Before using an agent or a script, you should be able to answer:</p>
+<ul><li><p>What is the difference between commit and push? (chapter 1)</p></li><li><p>How do I read a diff and what changed? (chapter 3)</p></li><li><p>Which branch am I on, and why must I not be on <code>main</code>? (chapter 4)</p></li><li><p>What happens in a Merge Request and who decides the merge? (chapter 5)</p></li><li><p>What is a conflict and how is it resolved without losing work? (chapter 6)</p></li><li><p>How do I undo a published commit? (chapter 7)</p></li><li><p>Why does a secret never enter the repository? (chapter 10)</p></li></ul>
+<p>If the automation fails halfway through, and one day it will, you are the one who has to understand what state the repository was left in and how to continue.</p>
+<h3 id="common-mistakes-when-automating">Common mistakes when automating</h3>
+<table><thead><tr><th>Mistake</th><th>Consequence</th><th>How to avoid it</th></tr></thead><tbody><tr><td>Giving the agent permission for everything without confirmation</td><td>Publishes changes without review</td><td>Written rules and confirmation before commit and push</td></tr><tr><td>Automatic <code>git add .</code></td><td>Sensitive or unrelated files get in</td><td>The person chooses the files, or a sensitive-file alert</td></tr><tr><td>Letting the agent resolve conflicts</td><td>Other people's work is silently lost</td><td>Rule: on a conflict, it stops</td></tr><tr><td>Not keeping a log</td><td>You don't know what it did or how to revert</td><td>A log of every command with the commit code</td></tr><tr><td>Approving diffs you don't understand</td><td>Errors that are hard to trace</td><td>Ask for an explanation or don't approve</td></tr><tr><td>Pasting passwords to the agent in chat</td><td>The secret ends up in places you don't control</td><td>Secrets go in <code>.env</code> or in GitLab variables</td></tr></tbody></table>
+<h3 id="real-example-one-change-from-start-to-finish-with-an-agent">Real example: one change from start to finish with an agent</h3>
+<p>Ana receives issue <code>#45 Add date filter to search</code>. She asks the agent: "Work on issue #45 on a new branch. Show me the plan before touching code."</p>
+<p>The agent checks the state: Ana is on <code>main</code>, up to date and with no changes. It proposes creating <code>feature/45-date-filter</code> and Ana confirms. Then it proposes a three-step plan; Ana asks it to remove one step that wasn't needed. The agent writes the code and shows her the diff: it touched the search file and, without being asked, a styles file. Ana asks it to revert that second change.</p>
+<p>With a clean diff, Ana tests the filter on her computer and it works. The agent proposes the message <code>Add date filter to search (#45)</code>. Ana approves it, confirms the push, and the agent prepares the Merge Request description with <code>Closes #45</code>. Ana reviews it, adjusts it and assigns Luis as reviewer.</p>
+<p>Luis reviews and approves. <strong>Ana merges.</strong> The agent saved time writing code and commands; every decision was Ana's.</p>
+<h3>Practical exercise</h3>
+<p>In your <code>practice-git</code> project:</p>
+<ol><li><p>Create the rules file for your agent (or the one your editor uses) with the example from this chapter, adapted to how you work. Publish it with a normal Merge Request.</p></li><li><p>Create an issue: "Add a hobbies section to the about-me.md file".</p></li><li><p>Ask your agent to work on that issue following the rules: new branch, diff and message before the commit, confirmation before the push.</p></li><li><p>When it shows you the diff, review it with this chapter's list. Ask for at least one correction, even a small one.</p></li><li><p>Confirm the commit and the push. Ask it for the list of commands it ran.</p></li><li><p><strong>Verify manually in GitLab:</strong> that the branch exists with the right name, that the commit has a good message, that the diff in the Merge Request is the one you approved, and that the description includes <code>Closes #number</code>.</p></li><li><p>Also verify from the terminal with <code>git log --oneline</code> and <code>git show</code>.</p></li><li><p>Merge the Merge Request yourself and check that the issue closed.</p></li><li><p>If you prefer the script, repeat the steps with <code>publish.sh</code> and check the log file at the end.</p></li></ol>
+<h3>Chapter checklist</h3>
+<ul><li data-checked="false"><p><input type="checkbox" disabled> I understand that automation executes, but the decisions are mine.</p></li><li data-checked="false"><p><input type="checkbox" disabled> I know which tasks can be automated and which never should be.</p></li><li data-checked="false"><p><input type="checkbox" disabled> My automation validates repository, branch and state before acting.</p></li><li data-checked="false"><p><input type="checkbox" disabled> I see a preview and confirm before every commit and push.</p></li><li data-checked="false"><p><input type="checkbox" disabled> Conflicts, protected branches and merges are always handled by a person.</p></li><li data-checked="false"><p><input type="checkbox" disabled> Every command is logged so I can audit or revert it.</p></li><li data-checked="false"><p><input type="checkbox" disabled> I have written rules for my agent.</p></li><li data-checked="false"><p><input type="checkbox" disabled> I know how to ask the agent for tasks with clear scope and limits.</p></li><li data-checked="false"><p><input type="checkbox" disabled> I review the agent's diff and don't approve what I don't understand.</p></li><li data-checked="false"><p><input type="checkbox" disabled> I never give secrets to the agent.</p></li><li data-checked="false"><p><input type="checkbox" disabled> I manually verified in GitLab a change made with the agent's help.</p></li></ul>
+<h2>Chapter 12. Investigating History: Git as a Detective</h2>
+<p>Git's history is not just a record: it is the tool for answering questions like "who changed this?", "when did it start failing?" or "what is the difference between my branch and <code>main</code>?". In this chapter you will learn to search the history, compare versions and understand how branches are combined inside.</p>
+<h3>Why it is worth learning to investigate</h3>
+<p>When something fails in a system, the first question is almost never "how do I fix it?". It is "what changed?". If you know how to search the history, you find the responsible commit, who made it and why in minutes. Without that, you have to guess.</p>
+<p>It is also useful for calmer things: understanding why a part of the project is written a certain way, remembering what you did last week, or preparing a summary of changes for your manager.</p>
+<p>This is where the value of the good commit messages from chapter 3 shows. A history full of <code>changes</code> and <code>fixes</code> is no use to any detective.</p>
+<h3>Filtering the history with <code>git log</code></h3>
+<p>You already know <code>git log --oneline</code>. These variations let you search for something specific:</p>
+<table><thead><tr><th>Question</th><th>Command</th></tr></thead><tbody><tr><td>What did Ana do?</td><td><code>git log --oneline --author=&quot;Ana&quot;</code></td></tr><tr><td>What changed this week?</td><td><code>git log --oneline --since=&quot;1 week ago&quot;</code></td></tr><tr><td>What changed between two dates?</td><td><code>git log --oneline --since=&quot;2026-09-01&quot; --until=&quot;2026-09-30&quot;</code></td></tr><tr><td>Which commits touched this file?</td><td><code>git log --oneline -- contact.md</code></td></tr><tr><td>Which commits mention &quot;hours&quot; in the message?</td><td><code>git log --oneline --grep=&quot;hours&quot;</code></td></tr><tr><td>Which commit added or removed this text?</td><td><code>git log --oneline -S &quot;500-0000&quot;</code></td></tr><tr><td>How many files did each commit change?</td><td><code>git log --stat</code></td></tr></tbody></table>
+<p>You can combine them. For example, Ana's commits that touched <code>contact.md</code> this month:</p>
+<pre><code class="language-bash">git log --oneline --author=&quot;Ana&quot; --since=&quot;1 month ago&quot; -- contact.md</code></pre>
+<p>The most powerful one for investigating errors is <code>-S</code>. It finds the commits where a text <strong>appeared or disappeared</strong>. If a phone number changed and nobody knows when, <code>git log -S &quot;old-number&quot;</code> takes you straight to the commit.</p>
+<h3>Seeing a file as it was before</h3>
+<p>To see a complete file exactly as it was in a commit, without changing anything in your folder:</p>
+<pre><code class="language-bash">git show a3f9c21:contact.md</code></pre>
+<p>It is like opening an old photo of the file. If what you want is to recover it, use <code>git restore --source</code> from chapter 7.</p>
+<h3 id="git-blame-who-wrote-each-line"><code>git blame</code>: who wrote each line?</h3>
+<pre><code class="language-bash">git blame contact.md</code></pre>
+<p>It shows the file line by line and, next to each one, the commit, the author and the date of the last change:</p>
+<pre><code>a3f9c21 (Ana Pérez  2026-10-01) Hours: Monday to Friday, 8:00 to 5:00
+7b2e104 (Luis Gómez 2026-09-15) Phone: 500-0000</code></pre>
+<p>To see only some lines, for example lines 10 to 20:</p>
+<pre><code class="language-bash">git blame -L 10,20 contact.md</code></pre>
+<p>In GitLab you have the same thing more comfortably: open the file and press the <strong>Blame</strong> button. You can click each commit to see the full change.</p>
+<blockquote><p><strong>About the name.</strong> <em>Blame</em> means "to blame" in English, but don't use it to hunt for culprits. Use it to find who to ask and to understand the context. The person who wrote that line is the best one to explain why it is like that. And that person may be you, six months ago.</p></blockquote>
+<h3>Comparing versions and branches</h3>
+<p><code>git diff</code> is not only for your unsaved changes. It also compares any pair of moments:</p>
+<pre><code class="language-bash">git diff a3f9c21 7b2e104                 # Between two commits
+git diff main feature/form               # Between two branches
+git diff main feature/form --stat        # Only which files change and how much
+git diff main -- contact.md              # One file against main</code></pre>
+<p>To know which commits your branch has that <code>main</code> doesn't have yet:</p>
+<pre><code class="language-bash">git log --oneline main..feature/form</code></pre>
+<p>And the other way around, what <code>main</code> has that your branch is missing:</p>
+<pre><code class="language-bash">git log --oneline feature/form..main</code></pre>
+<p>If the second command shows many commits, it is a sign that your branch is falling behind and it is time to bring in <code>main</code> (chapter 4).</p>
+<p>In GitLab, the equivalent option is under <strong>Code &gt; Compare revisions</strong>: you choose two branches, tags or commits and see all the differences.</p>
+<h3 id="git-fetch-and-git-pull-look-before-you-combine"><code>git fetch</code> and <code>git pull</code>: look before you combine</h3>
+<p>Until now you have used <code>git pull</code> to bring in changes. Actually <code>pull</code> does two things in a row:</p>
+<ol><li><p><strong><code>git fetch</code></strong>: downloads the new information from GitLab, without touching your files or your branch.</p></li><li><p><strong><code>git merge</code></strong>: combines that information with your branch.</p></li></ol>
+<p>Sometimes it is good to do only the first part, to look before combining:</p>
+<pre><code class="language-bash">git fetch
+git log --oneline main..origin/main     # What is new on GitLab?
+git diff main origin/main --stat        # Which files changed?</code></pre>
+<p><code>origin/main</code> is the copy your computer keeps of how <code>main</code> is on GitLab. After reviewing, if everything is fine, run <code>git pull</code> (or <code>git merge origin/main</code>).</p>
+<p>It is like the mailbox from chapter 4: <code>fetch</code> brings the letters in, and you decide when to open them.</p>
+<h3 id="how-branches-are-combined-inside">How branches are combined inside</h3>
+<p>In chapter 5 you saw the squash option. It is worth understanding the four ways Git can combine one branch with another, because each leaves a different history.</p>
+<h4 id="fast-forward">Fast-forward</h4>
+<p>If <code>main</code> hasn't changed since you created your branch, Git only has to move the label of <code>main</code> to your last commit. No new commit is created:</p>
+<pre><code>Before:   main: A --- B
+                      \
+         branch:       C --- D
+
+After:    main: A --- B --- C --- D</code></pre>
+<h4 id="merge-commit">Merge commit</h4>
+<p>If <code>main</code> did change, Git creates a special commit that joins the two lines. That commit has two "parents":</p>
+<pre><code>main: A --- B --- E ------- M
+             \             /
+branch:       C --- D ----</code></pre>
+<p>Advantage: the history shows exactly when work happened in parallel and when it was joined. Disadvantage: with many branches, the drawing becomes a tangle.</p>
+<h4 id="squash">Squash</h4>
+<p>All the commits of your branch become one when they enter <code>main</code>:</p>
+<pre><code>main: A --- B --- E --- S     (S contains C + D together)</code></pre>
+<p>Advantage: <code>main</code> stays clean, one commit per task. Disadvantage: the detail of the intermediate steps is lost.</p>
+<h4 id="rebase">Rebase</h4>
+<p>Instead of joining the lines, Git "rewrites" your commits as if you had made them after the latest changes in <code>main</code>:</p>
+<pre><code>main: A --- B --- E --- C&#39; --- D&#39;</code></pre>
+<p>Advantage: a straight-line history, very easy to read. Disadvantage: it <strong>rewrites your commits</strong> (that is why they carry an apostrophe: they are new copies, with other identifiers).</p>
+<blockquote><p><strong>The golden rule of rebase:</strong> never rebase commits that other people have already downloaded. If you do, your history and theirs stop matching and you cause them serious problems. Use it only on your own branch, before sharing it, and when you feel confident with everything above.</p></blockquote>
+<h4 id="which-one-to-use">Which one to use?</h4>
+<p>Usually you don't decide this yourself: your team defines it in the project configuration on GitLab (<strong>Settings &gt; Merge requests &gt; Merge method</strong>). What matters is that you understand why your project's history looks the way it does.</p>
+<table><thead><tr><th>Method</th><th>Resulting history</th><th>Common in</th></tr></thead><tbody><tr><td>Merge commit</td><td>Shows branches and merges</td><td>Teams that want full traceability</td></tr><tr><td>Squash</td><td>One commit per task in <code>main</code></td><td>Teams that prioritize a clean <code>main</code></td></tr><tr><td>Fast-forward / rebase</td><td>Straight line</td><td>Experienced teams with short branches</td></tr></tbody></table>
+<h3>Finding when an error started</h3>
+<p>When you know something worked before and doesn't now, you can search for the culprit commit step by step:</p>
+<ol><li><p>Find a moment when it worked (an old commit or tag).</p></li><li><p>Review the intermediate commits with <code>git log --oneline good-commit..main</code>.</p></li><li><p>If there are few, read their messages and changes with <code>git show</code>.</p></li><li><p>If there are many, test the project at a commit from the middle. Depending on whether it works or not, you will know which half has the error. Repeat.</p></li></ol>
+<p>Git automates this "split in half" method with a command called <code>git bisect</code>. We won't look at it in depth, but now you know it exists and what it is for: when you need it someday, the idea will already feel familiar.</p>
+<h3>Real example: the phone number that changed by itself</h3>
+<p>A user reports that the site's contact phone number is wrong. Nobody remembers changing it.</p>
+<p>Ana searches for the correct number in the history:</p>
+<pre><code class="language-bash">git log --oneline -S &quot;500-0000&quot;</code></pre>
+<p>Two commits appear: the one that added the number months ago, and one from last week that removed it, with the message <code>Update footer</code>. Ana opens it with <code>git show</code> and sees that, while reorganizing the footer, an old phone number was copied by mistake.</p>
+<p>With <code>git blame</code> she confirms that the current line comes from that commit. She writes to the person who made it, they figure out together what happened, and Ana corrects the number on a branch <code>fix/contact-phone</code> with her Merge Request. Everything in fifteen minutes and without blaming anyone.</p>
+<h3>Practical exercise</h3>
+<p>In your <code>practice-git</code> project, which by now has several commits:</p>
+<ol><li><p>List only your commits from this week using <code>--author</code> and <code>--since</code>.</p></li><li><p>Search with <code>--grep</code> for a commit whose word you remember.</p></li><li><p>Use <code>git log -S</code> to find the commit that added a specific line of <code>README.md</code>.</p></li><li><p>Open <code>hours.md</code> (from chapter 6) with <code>git blame</code> and then with GitLab's <strong>Blame</strong> button.</p></li><li><p>Show how <code>README.md</code> looked in your first commit with <code>git show code:README.md</code>.</p></li><li><p>Create a branch, make two commits and compare it with <code>main</code> using <code>git diff main your-branch --stat</code> and <code>git log --oneline main..your-branch</code>.</p></li><li><p>Run <code>git fetch</code> and compare <code>main</code> with <code>origin/main</code> before running <code>git pull</code>.</p></li><li><p>Run <code>git log --oneline --graph --all</code> and find a merge commit from the earlier chapters. How many parents does it have?</p></li><li><p>Check in GitLab, under <strong>Settings &gt; Merge requests</strong>, which merge method your project uses.</p></li></ol>
+<h3>Chapter checklist</h3>
+<ul><li data-checked="false"><p><input type="checkbox" disabled> I can filter the history by author, date, file and message.</p></li><li data-checked="false"><p><input type="checkbox" disabled> I can use <code>git log -S</code> to find the commit that added or removed a text.</p></li><li data-checked="false"><p><input type="checkbox" disabled> I can view a file as it was in an earlier commit.</p></li><li data-checked="false"><p><input type="checkbox" disabled> I use <code>git blame</code> to find context, not culprits.</p></li><li data-checked="false"><p><input type="checkbox" disabled> I can compare commits and branches with <code>git diff</code> and <code>git log a..b</code>.</p></li><li data-checked="false"><p><input type="checkbox" disabled> I understand that <code>pull</code> is <code>fetch</code> plus <code>merge</code>.</p></li><li data-checked="false"><p><input type="checkbox" disabled> I know how to review what is new on GitLab before combining it.</p></li><li data-checked="false"><p><input type="checkbox" disabled> I understand the difference between fast-forward, merge commit, squash and rebase.</p></li><li data-checked="false"><p><input type="checkbox" disabled> I know the golden rule of rebase.</p></li><li data-checked="false"><p><input type="checkbox" disabled> I know how to find when an error started by splitting the history.</p></li></ul>

@@ -1,0 +1,195 @@
+<h2>Chapter 4. Branches: Work Without Fear</h2>
+<p>A branch is a parallel working copy inside the same project. It lets you try things, make mistakes and finish a change without touching the main version, which is the one the whole team uses. If you learn only one habit from this chapter, let it be this one: <strong>never work directly on <code>main</code></strong>.</p>
+<h3>Why branches exist</h3>
+<p>Imagine your team maintains the office website. The version on <code>main</code> is the one that works and the one that gets published. Now you are asked to redesign the contact form, which will take you three days.</p>
+<p>If you work directly on <code>main</code>:</p>
+<ul><li><p>For three days, the main version has a half-finished form.</p></li><li><p>If in the meantime someone needs to fix an urgent bug, they would have to publish your unfinished work too.</p></li><li><p>If halfway through you decide your idea doesn't work, undoing it is complicated.</p></li></ul>
+<p>With a branch, you do the whole redesign separately. <code>main</code> stays intact and stable. When you finish and someone reviews your work, you combine it with <code>main</code>. If your idea didn't work, you delete the branch and nobody ever knew.</p>
+<h3>A comparison: the draft</h3>
+<p>Think of <code>main</code> as <strong>the official document</strong> that has been published. A branch is <strong>a draft</strong> that you take from that document. You write, cross out and rewrite whatever you want in your draft. The official document doesn't change.</p>
+<p>When your draft is ready, you ask for it to be reviewed. If it is approved, its changes go into the official document. That is called <strong>merging</strong>.</p>
+<p>And the best part: each person on the team can have their own drafts at the same time, each one for a different task.</p>
+<h3>What a branch looks like inside</h3>
+<p>Remember from chapter 1 that each commit points to the previous one, forming a chain. A branch is simply <strong>a label that points to the latest commit of a line of work</strong>. When you make a commit on that branch, the label moves forward.</p>
+<pre><code>main:            A --- B --- C
+                        \
+contact-form:            D --- E</code></pre>
+<p>Here, <code>main</code> has commits A, B and C. The branch <code>contact-form</code> left from commit B and has its own commits, D and E. The two lines move forward without getting in each other's way. When you merge, the changes from D and E enter <code>main</code>.</p>
+<p>That is why creating a branch is instant and takes no space: Git doesn't copy files, it just creates a new label.</p>
+<h3>Branch commands</h3>
+<h4>See your branches</h4>
+<pre><code class="language-bash">git branch</code></pre>
+<p>It shows your local branches. The one with an asterisk (<code>*</code>) is the one you are on now. To also see the branches that exist in GitLab:</p>
+<pre><code class="language-bash">git branch -a</code></pre>
+<p>The ones that start with <code>remotes/origin/</code> are the GitLab ones.</p>
+<h4>Create a branch and switch to it</h4>
+<p>First, make sure you start from the latest version of <code>main</code>:</p>
+<pre><code class="language-bash">git switch main
+git pull</code></pre>
+<p>Now create your branch and enter it with a single command:</p>
+<pre><code class="language-bash">git switch -c feature/contact-form</code></pre>
+<p>The <code>-c</code> means <em>create</em>. From this moment on, all your commits go to this branch.</p>
+<blockquote><p><strong>And <code>git checkout</code>?</strong> In older tutorials you will see <code>git checkout -b branch-name</code>. It does the same thing. <code>git switch</code> is the modern and clearer way, because <code>checkout</code> does too many different things. In this book we use <code>switch</code>.</p></blockquote>
+<h4>Switch between branches</h4>
+<pre><code class="language-bash">git switch main
+git switch feature/contact-form</code></pre>
+<p>When you switch branches, the files in your folder change to show the state of that branch. Don't be alarmed if a file "disappears": it is still saved in the other branch.</p>
+<h4>Publish your branch to GitLab</h4>
+<p>The first time you push a new branch:</p>
+<pre><code class="language-bash">git push -u origin feature/contact-form</code></pre>
+<p>After that first time, <code>git push</code> is enough. Publishing your branch has two advantages: your work is backed up on GitLab and your teammates can see it.</p>
+<h4>Keep your branch up to date with <code>main</code></h4>
+<p>While you work on your branch, others keep merging changes into <code>main</code>. If your branch falls behind for a long time, joining it at the end will be harder. That is why it is good to bring the new changes from <code>main</code> into your branch every so often:</p>
+<pre><code class="language-bash">git switch main
+git pull
+git switch feature/contact-form
+git merge main</code></pre>
+<p>This brings the new changes from <code>main</code> into your branch. If nobody touched the same things you did, it combines on its own. If there were changes on the same lines, a conflict will appear, and we solve it in chapter 6. It is better to solve a small conflict today than a huge one in a month.</p>
+<blockquote><p><strong>You will hear about <code>rebase</code>.</strong> It is another way to update your branch that leaves a more linear history. It is useful, but it carries more risks for beginners. Stick with <code>merge</code> until you feel confident with everything in this book.</p></blockquote>
+<h4>Delete a branch</h4>
+<p>When your branch has already been merged into <code>main</code>, you no longer need it:</p>
+<pre><code class="language-bash">git switch main
+git branch -d feature/contact-form</code></pre>
+<p>If Git refuses with a message like <code>not fully merged</code>, it is protecting you: that branch has commits that are not in <code>main</code>. Check before deleting. If you are completely sure you want to throw that work away, use <code>-D</code> in capitals. Use it with great care.</p>
+<p>To delete the branch on GitLab:</p>
+<pre><code class="language-bash">git push origin --delete feature/contact-form</code></pre>
+<p>Usually it is not necessary: GitLab can delete it automatically when you complete the Merge Request (we see this in chapter 5).</p>
+<h3>What happens to unsaved changes when you switch branches</h3>
+<p>This is a very common question. If you have modified files without a commit and switch branches, one of two things can happen:</p>
+<ol><li><p><strong>The changes travel with you</strong> to the new branch, if they don't clash with anything. This is confusing, because it looks as if the change "moved" to another branch.</p></li><li><p><strong>Git won't let you switch</strong> and tells you your changes would be overwritten. It is protecting you.</p></li></ol>
+<p>The simple rule: <strong>before switching branches, leave your folder clean.</strong> Commit what you have, or save it temporarily with <code>git stash</code> (we see it in chapter 7). Always check with <code>git status</code> before switching.</p>
+<h3>How to name branches</h3>
+<p>A good name says <strong>what kind of change</strong> it is and <strong>what it is about</strong>. The most used convention is <code>type/short-description</code>:</p>
+<table><thead><tr><th>Prefix</th><th>What for</th><th>Example</th></tr></thead><tbody><tr><td><code>feature/</code></td><td>Something new</td><td><code>feature/contact-form</code></td></tr><tr><td><code>fix/</code></td><td>Fixing a bug</td><td><code>fix/footer-phone</code></td></tr><tr><td><code>hotfix/</code></td><td>Urgent fix for production</td><td><code>hotfix/login-crash</code></td></tr><tr><td><code>docs/</code></td><td>Documentation only</td><td><code>docs/install-instructions</code></td></tr><tr><td><code>refactor/</code></td><td>Reorganizing without changing what it does</td><td><code>refactor/folder-structure</code></td></tr><tr><td><code>chore/</code></td><td>Maintenance, configuration</td><td><code>chore/update-dependencies</code></td></tr></tbody></table>
+<p>Rules for the name:</p>
+<ul><li><p>Everything in lowercase.</p></li><li><p>Words separated with hyphens, no spaces.</p></li><li><p>No accents or special letters: write <code>installation</code>, not <code>instalación</code>.</p></li><li><p>Short but clear: three or four words are enough.</p></li><li><p>If you work with issues (chapter 8), include their number: <code>fix/42-footer-phone</code>. That way anyone knows which task it belongs to.</p></li></ul>
+<p>The most important thing is that <strong>the whole team uses the same convention</strong>. If your team already has one, follow it even if it is different from this one.</p>
+<h3>Short-lived branches: the rule I learned the hard way</h3>
+<p>A branch should live <strong>days, not weeks.</strong> The longer it lives apart from <code>main</code>, the more changes both accumulate, and the harder it is to combine them. In chapter 6 I tell you about the huge conflict I lived through by not respecting this rule.</p>
+<p>How to keep branches short:</p>
+<ul><li><p><strong>Split big work into small pieces.</strong> Instead of one branch called "full website redesign", make one for the header, another for the form, another for the footer.</p></li><li><p><strong>Merge often.</strong> Each finished and reviewed piece goes into <code>main</code>.</p></li><li><p><strong>Bring <code>main</code> into your branch frequently</strong> if your work drags on.</p></li><li><p><strong>One branch, one task.</strong> Don't use the form branch to "while I'm at it" fix something else.</p></li></ul>
+<h3>Branches in GitLab</h3>
+<p>In the menu <strong>Code &gt; Branches</strong> you see all the branches of the project. For each one, GitLab shows you:</p>
+<ul><li><p>Its last commit and who made it.</p></li><li><p>How many commits it is <strong>ahead</strong> of <code>main</code> (changes it has and <code>main</code> doesn't) and how many <strong>behind</strong> (changes from <code>main</code> it is missing).</p></li><li><p>A button to create a Merge Request.</p></li><li><p>Whether it is protected (chapter 10).</p></li></ul>
+<p>You can also create branches from there with <strong>New branch</strong>, although then you will need to bring it to your computer:</p>
+<pre><code class="language-bash">git fetch
+git switch branch-name</code></pre>
+<p><code>git fetch</code> brings the new information from GitLab without combining it with your work. It is like checking the mailbox without opening the letters.</p>
+<h3>Seeing branches as a drawing</h3>
+<p>To view the history with its branches drawn in the terminal:</p>
+<pre><code class="language-bash">git log --oneline --graph --all</code></pre>
+<p>You will see lines and asterisks that show where each branch split off and where it merged back. At first it looks like a tangle, but with practice it reads like a subway map. In GitLab you have the same view, prettier, under <strong>Code &gt; Repository graph</strong>.</p>
+<h3>Common branch mistakes</h3>
+<table><thead><tr><th>What happened</th><th>How to avoid or fix it</th></tr></thead><tbody><tr><td>I made commits on <code>main</code> instead of my branch</td><td>See chapter 7, "I committed to the wrong branch". Prevention: always check the branch with <code>git status</code></td></tr><tr><td>I created the branch from an old version of <code>main</code></td><td>Before creating the branch, run <code>git switch main</code> and <code>git pull</code></td></tr><tr><td><code>error: pathspec &#39;name&#39; did not match</code></td><td>The branch doesn't exist locally. Run <code>git fetch</code> and check the exact name with <code>git branch -a</code></td></tr><tr><td>I don't know which branch I'm on</td><td><code>git status</code> says it on the first line. In the editor, look at the bottom left</td></tr><tr><td>My branch has things from another task</td><td>One branch per task. Move those changes to their own branch before asking for review</td></tr></tbody></table>
+<h3>Real example: an urgent bug in the middle of your work</h3>
+<p>Ana is on the branch <code>feature/contact-form</code>, halfway through the redesign. Suddenly she is told that the phone number in the footer is wrong and it has to be fixed today.</p>
+<ol><li><p>Ana commits what she has on her branch: <code>git commit -m &quot;Progress: structure of the new form&quot;</code>.</p></li><li><p>She goes back to <code>main</code> and updates it: <code>git switch main</code> and <code>git pull</code>.</p></li><li><p>She creates a branch for the fix: <code>git switch -c fix/footer-phone</code>.</p></li><li><p>She corrects the phone number, commits, pushes, and asks for review.</p></li><li><p>The fix is merged into <code>main</code> and published the same day.</p></li><li><p>Ana returns to her branch: <code>git switch feature/contact-form</code>.</p></li><li><p>She brings the fix into her branch: <code>git merge main</code>.</p></li></ol>
+<p>The urgent bug was resolved without publishing the half-finished form. And Ana's branch is up to date. This is impossible to do cleanly if everyone works on <code>main</code>.</p>
+<h3>Practical exercise</h3>
+<p>Use your <code>practice-git</code> project.</p>
+<ol><li><p>Make sure you are on <code>main</code> and up to date: <code>git switch main</code> and <code>git pull</code>.</p></li><li><p>Create a branch called <code>feature/about-me-section</code>.</p></li><li><p>Create a file <code>about-me.md</code> with three lines about yourself. Commit it.</p></li><li><p>Add one more line and make another commit.</p></li><li><p>Publish your branch with <code>git push -u origin feature/about-me-section</code>.</p></li><li><p>Go back to <code>main</code> with <code>git switch main</code> and look for the file <code>about-me.md</code> with <code>ls</code>. It isn't there. Go back to your branch: it is there.</p></li><li><p>Open GitLab, go to <strong>Code &gt; Branches</strong> and find your branch. How many commits is it ahead of <code>main</code>?</p></li><li><p>Run <code>git log --oneline --graph --all</code> and find your two commits.</p></li><li><p>Extra challenge: from <code>main</code>, create <code>fix/readme-typo</code>, correct or add something in the README, commit and push. Now you have two independent branches.</p></li></ol>
+<p>Don't delete these branches yet: you will use them in chapter 5.</p>
+<h3>Chapter checklist</h3>
+<ul><li data-checked="false"><p><input type="checkbox" disabled> I can explain what a branch is in my own words.</p></li><li data-checked="false"><p><input type="checkbox" disabled> I know why you don't work directly on <code>main</code>.</p></li><li data-checked="false"><p><input type="checkbox" disabled> Before creating a branch, I update <code>main</code> with <code>git pull</code>.</p></li><li data-checked="false"><p><input type="checkbox" disabled> I know how to create a branch and switch with <code>git switch -c</code> and <code>git switch</code>.</p></li><li data-checked="false"><p><input type="checkbox" disabled> I know how to publish a new branch with <code>git push -u origin</code>.</p></li><li data-checked="false"><p><input type="checkbox" disabled> I know how to bring changes from <code>main</code> into my branch with <code>git merge main</code>.</p></li><li data-checked="false"><p><input type="checkbox" disabled> I leave my folder clean before switching branches.</p></li><li data-checked="false"><p><input type="checkbox" disabled> I name my branches <code>type/short-description</code>, without accents or spaces.</p></li><li data-checked="false"><p><input type="checkbox" disabled> I keep my branches short: days, not weeks.</p></li><li data-checked="false"><p><input type="checkbox" disabled> I know how to delete a branch and I understand why Git sometimes stops me.</p></li><li data-checked="false"><p><input type="checkbox" disabled> I found my branches in GitLab and saw how many commits they are ahead.</p></li></ul>
+<h2>Chapter 5. Merge Requests: Ask Permission to Integrate</h2>
+<p>A Merge Request is a formal request to combine your branch with <code>main</code>. It is the moment when another person looks at your work before it enters the version the whole team uses. Here you will learn to create it, describe it well, receive comments without taking them personally, and complete the merge.</p>
+<blockquote><p><strong>On GitHub it is called…</strong> a <em>Pull Request</em> (PR). It works exactly the same. When you hear "open a PR" or "open an MR", it is the same thing.</p></blockquote>
+<h3>Why not simply merge</h3>
+<p>Technically you could combine your branch with <code>main</code> from the terminal, without asking anyone. But you would lose three very valuable things:</p>
+<ol><li><p><strong>Another pair of eyes.</strong> Whoever writes a change almost never sees their own mistakes. Someone who arrives fresh finds the detail you missed.</p></li><li><p><strong>A record of the decision.</strong> The Merge Request keeps what changed, why, who reviewed it and what was discussed. A year from now, someone can understand why the system works the way it does.</p></li><li><p><strong>Team learning.</strong> By reviewing other people's work you learn how they think and get to know parts of the project you don't touch.</p></li></ol>
+<p>In many teams, moreover, <code>main</code> is <strong>protected</strong>: nobody can merge without an approved Merge Request. We look at this in chapter 10.</p>
+<p>If you want to go deeper into how to review code well, I have a book dedicated only to that. Here we focus on the process inside GitLab.</p>
+<h3>The full path of a Merge Request</h3>
+<ol><li><p>You work on your branch and push.</p></li><li><p>You open the Merge Request: "I want to merge <code>feature/x</code> into <code>main</code>".</p></li><li><p>You assign one or more people to review it.</p></li><li><p>They review it and leave comments.</p></li><li><p>You respond and fix things with new commits on the same branch.</p></li><li><p>They approve.</p></li><li><p>It is merged and the branch is deleted.</p></li><li><p>Everyone updates their <code>main</code> with <code>git pull</code>.</p></li></ol>
+<p>Let's go step by step.</p>
+<h3>Step 1: create the Merge Request</h3>
+<p>There are three ways, all of them lead to the same form:</p>
+<p><strong>From the terminal.</strong> When you push a new branch, GitLab answers with a link like this one:</p>
+<pre><code>remote: To create a merge request for feature/contact-form, visit:
+remote:   https://gitlab.com/your-username/project/-/merge_requests/new?...</code></pre>
+<p>Copy the link and open it in the browser.</p>
+<p><strong>From the GitLab notice.</strong> When you open the project after a push, GitLab shows a notice with your branch and a <strong>Create merge request</strong> button.</p>
+<p><strong>From the menu.</strong> Go to <strong>Code &gt; Merge requests &gt; New merge request</strong>. Choose your branch as the source (<em>source branch</em>) and <code>main</code> as the target (<em>target branch</em>).</p>
+<p>Always check the source and the target before going on. A common mistake is opening the Merge Request toward the wrong branch.</p>
+<h3>Step 2: describe the change well</h3>
+<p>This is the part people neglect most and the one that helps the reviewer the most. A good description saves your teammate from guessing what you did.</p>
+<p><strong>The title.</strong> Like a good commit: start with a verb and say what the change does.</p>
+<table><thead><tr><th>Confusing title</th><th>Clear title</th></tr></thead><tbody><tr><td><code>Form changes</code></td><td><code>Add email validation to the contact form</code></td></tr><tr><td><code>fix</code></td><td><code>Fix wrong phone number in the footer</code></td></tr><tr><td><code>Ana's branch</code></td><td><code>Update installation instructions for Windows</code></td></tr></tbody></table>
+<p><strong>The description.</strong> Use this template. You can copy it as it is:</p>
+<pre><code class="language-markdown">## What changes
+Adds email validation to the contact form.
+Before, it was possible to send it with a misspelled email.
+
+## Why
+We were receiving messages we could not reply to.
+Related to issue #42.
+
+## How to test it
+1. Open the contact page.
+2. Type an email without @ and press Send.
+3. The message &quot;Invalid email&quot; should appear.
+
+## Screenshots
+(before / after, if applicable)
+
+## Pending or doubts
+I did not validate specific domains. Is it needed?</code></pre>
+<p>Not every section always applies. But <strong>what changes, why, and how to test it</strong> should be in almost every Merge Request.</p>
+<p>If you write <code>Closes #42</code> in the description, GitLab will close issue 42 automatically when it is merged. We see this in chapter 8.</p>
+<h3>Step 3: the rest of the form</h3>
+<table><thead><tr><th>Field</th><th>What it is</th><th>Recommendation</th></tr></thead><tbody><tr><td>Assignee</td><td>The person responsible for the Merge Request</td><td>Usually you</td></tr><tr><td>Reviewer</td><td>Who should review it</td><td>Someone who knows that part of the project</td></tr><tr><td>Labels</td><td>Tags to classify it</td><td>The ones your team uses: <code>bug</code>, <code>documentation</code>, etc.</td></tr><tr><td>Milestone</td><td>Which delivery it belongs to</td><td>If your team works in deliveries</td></tr><tr><td>Delete source branch</td><td>Delete your branch when merging</td><td>Check it. It avoids old branches piling up</td></tr><tr><td>Squash commits</td><td>Combine all your commits into one when merging</td><td>Depends on your team's habit</td></tr></tbody></table>
+<blockquote><p><strong>What is squash?</strong> If your branch has ten commits like "progress", "more progress", "fix typo", squash turns them into one clean commit when it enters <code>main</code>. That way the main history stays tidy. Some teams always use it; others prefer to keep every commit.</p></blockquote>
+<h3>Merge Requests in draft</h3>
+<p>If your work is not finished but you want to show it or ask for an early opinion, mark it as a <strong>draft</strong> (<em>Draft</em>). You can do it with the <strong>Mark as draft</strong> checkbox or by starting the title with <code>Draft:</code>.</p>
+<p>A draft Merge Request cannot be merged. It is a clear way of saying: "it is not ready yet, but take a look". When you finish, remove the mark with <strong>Mark as ready</strong>.</p>
+<p>Opening a Merge Request early, as a draft, is a very good practice. You get feedback before going too far in a wrong direction.</p>
+<h3>Step 4: review your own Merge Request first</h3>
+<p>Before asking someone to review, review it yourself. Go to the <strong>Changes</strong> tab and read your changes as if they were someone else's. Look for:</p>
+<ul><li><p>Files that shouldn't be there.</p></li><li><p>Test text, forgotten comments or unfinished things.</p></li><li><p>Spelling mistakes in texts the user will see.</p></li><li><p>Changes that have nothing to do with the task.</p></li></ul>
+<p>You will be surprised how many things you find. And each one you fix yourself is one your teammate doesn't have to point out.</p>
+<h3>How to review in GitLab (if you are asked to review)</h3>
+<p>When someone assigns you as a reviewer:</p>
+<ol><li><p><strong>Read the description first.</strong> Understand what it is trying to solve before looking at the changes.</p></li><li><p><strong>Open the Changes tab.</strong> You will see each file with added lines in green and removed lines in red.</p></li><li><p><strong>Comment on a line.</strong> Hover over the line number and click the comment icon. Write your observation.</p></li><li><p><strong>Suggest a concrete change.</strong> In the comment, use the <strong>Insert suggestion</strong> button. You write how the line should look and the author can apply it with one click.</p></li><li><p><strong>Group your comments.</strong> Use <strong>Start a review</strong> instead of <strong>Add comment now</strong>. That way your comments are published together at the end, instead of sending the author ten notifications.</p></li><li><p><strong>Decide.</strong> If everything is fine, press <strong>Approve</strong>. If there are things to correct, submit your review and wait for the changes.</p></li></ol>
+<h4>How to write good comments</h4>
+<p>The review is about the code, not the person. A few guidelines:</p>
+<table><thead><tr><th>Instead of</th><th>Try</th></tr></thead><tbody><tr><td>&quot;This is wrong.&quot;</td><td>&quot;Here we need to validate that the date is not empty. If it arrives empty, the form fails.&quot;</td></tr><tr><td>&quot;Why did you do it this way?&quot;</td><td>&quot;What led you to this approach? I ask because X could be simpler.&quot;</td></tr><tr><td>&quot;Change the name.&quot;</td><td>&quot;Suggestion: <code>monthly_total</code> would be clearer than <code>tm</code>.&quot;</td></tr><tr><td>(silence about what is good)</td><td>&quot;I liked how you separated this part, it reads very clearly.&quot;</td></tr></tbody></table>
+<p>It also helps to mark how important each comment is:</p>
+<ul><li><p><strong>Blocking:</strong> it must be fixed before merging.</p></li><li><p><strong>Suggestion:</strong> it would improve things, but it is not mandatory.</p></li><li><p><strong>Nit</strong> (in Spanish you will see <em>detalle</em>): something minor, like a space or a word.</p></li><li><p><strong>Question:</strong> it is not a request for a change, you just want to understand.</p></li></ul>
+<h3>Step 5: respond to feedback</h3>
+<p>Receiving comments about your work can feel uncomfortable at first. Remember that review improves the result and protects you: it is better for a teammate to see the mistake today than for a user to see it tomorrow.</p>
+<p>For each comment:</p>
+<ol><li><p><strong>Read it in full</strong> and make sure you understand it. If not, ask.</p></li><li><p><strong>If you agree</strong>, make the fix in your branch, on your computer:</p></li></ol>
+<pre><code class="language-bash">git switch feature/contact-form
+# you make the fix
+git add fixed-file
+git commit -m &quot;Validate that the date is not empty&quot;
+git push</code></pre>
+<p>You don't need to open a new Merge Request. <strong>When you push to the same branch, the Merge Request updates itself</strong> with your new commits.</p>
+<ol start="3"><li><p><strong>Reply in the thread</strong> with something brief: "Fixed in the latest commit". If the reviewer used a suggestion, you can apply it directly with <strong>Apply suggestion</strong>.</p></li><li><p><strong>If you disagree</strong>, explain your reason respectfully. A good technical discussion is healthy. If you can't agree, ask for a third opinion.</p></li><li><p><strong>Mark the thread as resolved</strong> (<strong>Resolve thread</strong>) when it has been addressed. Some teams prefer that the person who wrote the comment resolves it: follow your team's habit.</p></li><li><p><strong>Let them know it is ready</strong> for another review. In GitLab you can request the review again with the icon next to the reviewer's name.</p></li></ol>
+<h3>Step 6: complete the merge</h3>
+<p>When the Merge Request is ready, you will see the <strong>Merge</strong> button. GitLab may require some conditions before enabling it:</p>
+<ul><li><p>The necessary approvals.</p></li><li><p>All comment threads resolved.</p></li><li><p>The pipeline green (chapter 9).</p></li><li><p>No conflicts with <code>main</code>.</p></li></ul>
+<p>If everything is met, press <strong>Merge</strong>. Your changes enter <code>main</code>.</p>
+<p>If GitLab says there are conflicts, you have to resolve them first. Chapter 6 shows you how.</p>
+<h3>Step 7: after the merge</h3>
+<p>Your branch is now in <code>main</code>, but your computer doesn't know it yet. Bring everything up to date:</p>
+<pre><code class="language-bash">git switch main
+git pull
+git branch -d feature/contact-form</code></pre>
+<p>Over time, your computer accumulates references to branches that were already deleted in GitLab. To clean them up:</p>
+<pre><code class="language-bash">git fetch --prune</code></pre>
+<h3>What makes a good Merge Request big or small</h3>
+<p>Small Merge Requests are reviewed better and faster. One of 50 lines is reviewed carefully in ten minutes. One of 2,000 lines is hardly ever really reviewed: it gets approved out of exhaustion.</p>
+<ul><li><p><strong>One Merge Request, one task.</strong> Same as branches.</p></li><li><p><strong>If it is big, split it.</strong> Several small Merge Requests that are merged one after another.</p></li><li><p><strong>Separate the mechanical from the important.</strong> If you renamed many files and also changed the logic, make two Merge Requests. That way the reviewer can focus on what matters.</p></li></ul>
+<h3>Common Merge Request mistakes</h3>
+<table><thead><tr><th>What happened</th><th>How to avoid or fix it</th></tr></thead><tbody><tr><td>I opened it toward the wrong branch</td><td>Edit the Merge Request and change the target branch</td></tr><tr><td>My new commits don't appear</td><td>Check that you pushed to the <strong>same</strong> branch</td></tr><tr><td>I opened a new Merge Request for every fix</td><td>Not needed: pushing to the same branch updates the existing one</td></tr><tr><td>Nobody reviews my Merge Request</td><td>Assign an explicit reviewer and let them know in the team channel</td></tr><tr><td>Changes appear that I didn't make</td><td>Your branch came from an old version or from another branch. Check with <code>git log</code> and, if needed, create a new branch from an updated <code>main</code></td></tr></tbody></table>
+<h3>Real example: a Merge Request that improves thanks to review</h3>
+<p>Luis opens the Merge Request <code>Add email validation to the contact form</code>. In the description he explains what changes, why, and how to test it.</p>
+<p>Ana reviews it. She leaves three comments: one <strong>blocking</strong> (the error message doesn't appear if the field is empty), one <strong>suggestion</strong> (a clearer function name, with the suggestion button) and one <strong>nit</strong> (a missing accent in a text).</p>
+<p>Luis applies the suggestion with one click, fixes the empty field and the accent in a new commit, pushes and replies in each thread. Ana tests again, resolves the threads and approves. Luis merges, and the branch deletes itself.</p>
+<p>Result: the empty-field bug never reached users. And there is a record of everything in GitLab.</p>
+<h3>Practical exercise</h3>
+<p>Use the branches you created in chapter 4. If you can, do it with another person as the reviewer; if not, play both roles yourself.</p>
+<ol><li><p>Open a Merge Request from <code>feature/about-me-section</code> into <code>main</code>.</p></li><li><p>Write a clear title and use the description template.</p></li><li><p>Mark it as a draft. Then remove the mark with <strong>Mark as ready</strong>.</p></li><li><p>Check the box to delete the branch when merging.</p></li><li><p>Review it yourself first in the <strong>Changes</strong> tab.</p></li><li><p>Leave a comment on one line, as if you were the reviewer. Use <strong>Insert suggestion</strong> to propose a change.</p></li><li><p>Apply the suggestion, or fix it on your computer, commit and push. Verify that the Merge Request was updated.</p></li><li><p>Reply to the comment and mark the thread as resolved.</p></li><li><p>Merge.</p></li><li><p>On your computer: <code>git switch main</code>, <code>git pull</code> and <code>git branch -d feature/about-me-section</code>.</p></li><li><p>Repeat with the branch <code>fix/readme-typo</code>, this time trying the squash option.</p></li></ol>
+<h3>Chapter checklist</h3>
+<ul><li data-checked="false"><p><input type="checkbox" disabled> I know what a Merge Request is and why you shouldn't merge without review.</p></li><li data-checked="false"><p><input type="checkbox" disabled> I know how to create it from the push link, from the notice, or from the menu.</p></li><li data-checked="false"><p><input type="checkbox" disabled> I always check the source branch and the target branch.</p></li><li data-checked="false"><p><input type="checkbox" disabled> I write clear titles and descriptions covering what changes, why, and how to test it.</p></li><li data-checked="false"><p><input type="checkbox" disabled> I know how to use draft mode.</p></li><li data-checked="false"><p><input type="checkbox" disabled> I review my own Merge Request before asking for review.</p></li><li data-checked="false"><p><input type="checkbox" disabled> I know how to comment on a line and propose a suggestion.</p></li><li data-checked="false"><p><input type="checkbox" disabled> I write comments about the code, not about the person.</p></li><li data-checked="false"><p><input type="checkbox" disabled> I know that a push to the same branch updates the Merge Request.</p></li><li data-checked="false"><p><input type="checkbox" disabled> I respond to and resolve comment threads.</p></li><li data-checked="false"><p><input type="checkbox" disabled> After the merge, I update <code>main</code> and delete my local branch.</p></li><li data-checked="false"><p><input type="checkbox" disabled> I prefer small Merge Requests, one per task.</p></li></ul>
