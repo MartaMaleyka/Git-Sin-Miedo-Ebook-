@@ -12,7 +12,7 @@
 (function () {
   var root = document.documentElement, lang = null, theme = null;
   try { lang = JSON.parse(localStorage.getItem('gsm-lang')); theme = JSON.parse(localStorage.getItem('gsm-theme')); } catch (e) {}
-  if (lang !== 'es' && lang !== 'en') lang = (navigator.language || '').slice(0, 2) === 'es' ? 'es' : 'en';
+  if (lang !== 'es' && lang !== 'en') lang = 'en';
   root.dataset.lang = lang;
   if (theme) root.dataset.theme = theme;
 })();
