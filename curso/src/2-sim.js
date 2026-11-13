@@ -117,7 +117,8 @@ class Sim {
   mkCommit(r, { msg, tree, parents, author, lane }) {
     const id = rid();
     const t = clone(tree); Object.keys(t).forEach(k => { t[k] = nm(t[k]); });
-    this.commits[id] = { id, msg: nm(msg), tree: t, parents: parents.filter(Boolean), author: nm(author || this.authorStr()), n: ++this.counter, lane: this.laneOf(r, lane || r.head || 'main'), date: new Date(Date.now() - (1000 - this.counter) * 3600e3).toISOString() };
+    const bname = lane || r.head || 'main';
+    this.commits[id] = { id, msg: nm(msg), tree: t, parents: parents.filter(Boolean), author: nm(author || this.authorStr()), n: this.realTime ? Date.now() * 100 + (++this.counter % 100) : ++this.counter, lane: this.laneOf(r, bname), bname, date: this.realTime ? new Date().toISOString() : new Date(Date.now() - (1000 - this.counter) * 3600e3).toISOString() };
     return id;
   }
   authorStr() { return (this.user.name || '‹YO›') + ' <' + (this.user.email || '‹MAIL›') + '>'; }
@@ -528,6 +529,7 @@ class Sim {
     const R = this.remoteOf(r); if (!R) return { out: "fatal: 'origin' does not appear to be a git repository", err: true };
     const lines = [];
     Object.entries(R.branches).forEach(([b, id]) => { if (r.rt[b] !== id) lines.push((r.rt[b] ? '   ' + r.rt[b] + '..' + id + '  ' : ' * [new branch]      ') + b + ' -&gt; origin/' + b); r.rt[b] = id; });
+    Object.entries(R.tags || {}).forEach(([t, v]) => { if (!r.tags[t]) { r.tags[t] = v; lines.push(' * [new tag]         ' + esc(t) + ' -&gt; ' + esc(t)); } });
     if (a.includes('--prune')) Object.keys(r.rt).forEach(b => { if (!R.branches[b]) { lines.push(' - [deleted]  origin/' + b); delete r.rt[b]; } });
     return { out: lines.length ? 'From ' + esc(r.remoteUrl) + '\n' + lines.join('\n') : '', ok: true, fetched: true, note: lines.length ? 'Trajiste la información nueva de GitLab, <b>sin tocar tus archivos</b>. Es mirar el buzón sin abrir las cartas.' : 'No había nada nuevo en GitLab.' };
   }
@@ -544,10 +546,11 @@ class Sim {
   g_push(r, a) {
     const R = this.remoteOf(r); if (!R) return { out: "fatal: No configured push destination.", err: true, note: 'Este proyecto no está conectado a GitLab todavía.' };
     if (a.includes('--force') || a.includes('-f')) return { out: '', err: true, note: '<b>push --force</b> reescribe la historia compartida y puede borrar trabajo del equipo. En este curso no lo usamos. Si tu push fue rechazado, haz <code>git pull</code> primero.' };
-    if (a.includes('--delete')) { const b = a[a.length - 1]; delete R.branches[b]; delete r.rt[b]; return { out: 'To ' + esc(r.remoteUrl) + '\n - [deleted]         ' + esc(b), ok: true }; }
+    if (a.includes('--delete')) { const b = a[a.length - 1]; const from = R.branches[b]; delete R.branches[b]; delete r.rt[b]; if (this.onRemoteWrite) this.onRemoteWrite({ type: 'delete', branch: b, from }); return { out: 'To ' + esc(r.remoteUrl) + '\n - [deleted]         ' + esc(b), ok: true }; }
     const names = a.filter(x => !x.startsWith('-'));
     if (names[0] === 'origin' && (r.tags[names[1]] || a.includes('--tags'))) {
       const list = a.includes('--tags') ? Object.keys(r.tags) : [names[1]]; list.forEach(t => { R.tags[t] = r.tags[t]; });
+      if (this.onRemoteWrite) this.onRemoteWrite({ type: 'tags', list: list.map(t => [t, r.tags[t]]) });
       return { out: 'To ' + esc(r.remoteUrl) + '\n' + list.map(t => ' * [new tag]         ' + esc(t) + ' -&gt; ' + esc(t)).join('\n'), ok: true, pushedTags: list, note: 'Las etiquetas no viajan solas: ahora <b>' + list.map(esc).join(', ') + '</b> ya está en GitLab.' };
     }
     if (r.detached) return { out: 'fatal: You are not currently on a branch.', err: true };
@@ -556,9 +559,10 @@ class Sim {
     if (!r.upstream[b] && !a.includes('-u') && !a.includes('--set-upstream') && !names[1]) return { out: 'fatal: The current branch ' + esc(b) + ' has no upstream branch.\nTo push the current branch and set the remote as upstream, use\n\n    git push --set-upstream origin ' + esc(b), err: true, note: 'Es la primera vez que publicas esta rama. Usa <code>git push -u origin ' + esc(b) + '</code>. Después bastará con <code>git push</code>.' };
     const cur = R.branches[b];
     if (cur && !this.ancestors(H).has(cur)) return { out: 'To ' + esc(r.remoteUrl) + '\n <span class="r">! [rejected]        ' + esc(b) + ' -&gt; ' + esc(b) + ' (fetch first)</span>\nerror: failed to push some refs\nhint: Updates were rejected because the remote contains work that you do\nhint: not have locally. Integrate the remote changes (e.g. \'git pull ...\')', err: true, rejected: true, note: '<b>Rechazado, y no es grave:</b> alguien publicó algo después de tu último pull. Haz <code>git pull</code> y vuelve a intentar.' };
-    if (b === 'main' && R.protected) return { out: 'remote: GitLab: You are not allowed to push code to protected branches on this project.\n <span class="r">! [remote rejected] main -&gt; main (pre-receive hook declined)</span>', err: true, note: '<b>main está protegida</b>: nadie hace push directo. El camino es una rama + Merge Request.' };
+    if (b === 'main' && R.protected) return { out: 'remote: GitLab: You are not allowed to push code to protected branches on this project.\n <span class="r">! [remote rejected] main -&gt; main (pre-receive hook declined)</span>', err: true, protectedReject: true, note: '<b>main está protegida</b>: nadie hace push directo. El camino es una rama + Merge Request.' };
     if (cur === H) return { out: 'Everything up-to-date', ok: true, pushed: b, note: 'Nada nuevo que publicar: GitLab ya tiene todos tus commits de <b>' + esc(b) + '</b>.' };
-    const isNew = !cur; R.branches[b] = H; r.rt[b] = H; if (a.includes('-u') || a.includes('--set-upstream')) r.upstream[b] = true;
+    const isNew = !cur; const prevRt = r.rt[b]; R.branches[b] = H; r.rt[b] = H;
+    if (this.onRemoteWrite) this.onRemoteWrite({ type: 'push', branch: b, from: cur || null, to: H, prevRt }); if (a.includes('-u') || a.includes('--set-upstream')) r.upstream[b] = true;
     const mr = isNew && b !== 'main' ? '\nremote:\nremote: To create a merge request for ' + esc(b) + ', visit:\nremote:   https://gitlab.com/' + esc(r.remoteUrl.split(':')[1] || '').replace(/\.git$/, '') + '/-/merge_requests/new\nremote:' : '';
     return { out: (mr ? mr.slice(1) + '\n' : '') + 'To ' + esc(r.remoteUrl) + '\n   ' + (isNew ? ' * [new branch]      ' + esc(b) + ' -&gt; ' + esc(b) : (cur + '..' + H + '  ' + esc(b) + ' -&gt; ' + esc(b))) + (r.upstream[b] && isNew ? "\nbranch '" + esc(b) + "' set up to track 'origin/" + esc(b) + "'." : ''), ok: true, pushed: b, note: 'Publicado: tus commits de <b>' + esc(b) + '</b> ya están en GitLab y el equipo los puede ver.' + (mr ? ' GitLab te dejó un enlace para abrir la Merge Request.' : '') };
   }

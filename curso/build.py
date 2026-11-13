@@ -8,6 +8,7 @@ Inputs (src/, concatenated in filename order):
   4-widgets.js  chapter-specific interactive widgets
   5-project.js  the course project (sitio-oficina) and how it grows module by module
   6-content.js  course content (modules, glossary, cheat sheet)
+  6z-team.js    team mode: Marcos, Katherine and César share one GitLab live (artifact db)
   7-app.js      navigation and pages
 Output: index.html
 

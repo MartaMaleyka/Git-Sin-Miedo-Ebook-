@@ -14,6 +14,8 @@ function renderNav() {
     nav.append(h('div', { class: 'navgroup' }, name));
     ids.forEach(id => { const m = MODULES.find(x => x.id === id); const p = modPct(m); nav.append(link(id, p === 100 ? '✓' : m.n, m.title, p, p === 100 ? 'done' : p > 0 ? 'part' : '')); });
   });
+  nav.append(h('div', { class: 'navgroup' }, 'Los tres a la vez'));
+  nav.append(link('en-equipo', '👥', 'Proyecto en equipo', null));
   nav.append(h('div', { class: 'navgroup' }, 'Referencia'));
   nav.append(link('glosario', 'Aa', 'Glosario de bolsillo', null), link('comandos', '$_', 'Hoja de comandos', null));
 }
@@ -55,6 +57,8 @@ function renderModule(m) {
     h('h1', null, m.title), h('p', { class: 'lead' }, m.short + '.'),
     ROADMAP[m.id] ? h('div', { class: 'fb info', style: 'margin:0', html: '📁 <b>Tu proyecto <code>sitio-oficina</code> en este módulo:</b> ' + ROADMAP[m.id] }) : null,
     h('div', { class: 'meta' }, h('span', { class: 'tag goal' }, '🎯 ' + m.goal), h('span', { class: 'tag' }, '⏱ ' + m.time), h('span', { class: 'tag' }, acts.length + ' actividades')), steps));
+  const ts = STAGE_OF_MODULE[m.id];
+  if (ts) view.append(h('section', { class: 'block analogy' }, h('div', { class: 'kind' }, h('i', null, '👥'), 'Práctica en equipo · Etapa ' + ts.n), h('p', { html: 'Cuando termines este módulo, haz con Marcos, Katherine y César la etapa <b>' + ts.n + ': ' + ts.title + '</b> del proyecto en equipo. ' + ts.intro }), h('div', { class: 'row' }, h('a', { class: 'btn teal', href: '#en-equipo-' + ts.n, style: 'text-decoration:none' }, 'Ir a la etapa ' + ts.n + ' →'))));
   if (m.id === 'm2') view.append(teamBlock('Antes de configurar Git, elige quién eres en el equipo. Tu nombre y tu correo serán los de esa persona, y los otros dos serán tus compañeros en todo el proyecto.'));
   m.blocks.forEach(b => view.append(renderBlock(b)));
   view.append(h('nav', { class: 'navbtns', 'aria-label': 'Navegación entre módulos' },
@@ -79,6 +83,7 @@ function renderHome() {
   view.append(Object.assign(teamBlock('<code>sitio-oficina</code> lo llevan tres personas: <b>Marcos</b>, <b>Katherine</b> y <b>César</b>. ¿Quién eres tú? Los otros dos serán tus compañeros durante todo el curso.'), { id: 'equipo' }));
   view.append(h('section', { class: 'block analogy' }, h('div', { class: 'kind' }, h('i', null, '📁'), 'Un solo proyecto, de principio a fin'),
     h('p', { html: 'Durante todo el curso trabajas en <b>el mismo proyecto</b>: <code>sitio-oficina</code>, la página web de la oficina que mantienes con ‹A› y ‹B›. Lo descargas en el módulo 2 y cada módulo le agrega algo, como en un equipo real. Cuando empieces una práctica, el proyecto estará tal como quedó en la anterior, más lo que tu equipo haya publicado mientras tanto.' }),
+    h('p', { html: '<b>Y lo hacen los tres a la vez:</b> además de las prácticas individuales, en <a href="#en-equipo">Proyecto en equipo</a> Marcos, Katherine y César comparten el mismo GitLab, en vivo, cada quien desde su dispositivo. Son 9 etapas, una después de cada módulo práctico.' }),
     h('ol', { class: 'olist' }, MODULES.filter(m => ['m2', 'm3', 'm4', 'm5', 'm6', 'm7', 'm12', 'm13', 'm14'].includes(m.id)).map(m => h('li', null, h('span', { class: 'n' }, m.n), h('span', { html: '<a href="#' + m.id + '">' + esc(m.title) + '</a>: ' + ROADMAP[m.id] }))))));
   STAGES.forEach(([name, ids]) => {
     view.append(h('div', { class: 'stage-label' }, name));
@@ -105,11 +110,13 @@ function renderCheats() {
 
 function route() {
   let id = location.hash.slice(1) || 'inicio'; const goTeam = id === 'equipo'; if (goTeam) id = 'inicio';
+  if (CURRENT_LAB) { CURRENT_LAB.stop(); CURRENT_LAB = null; }
+  const teamStage = id === 'en-equipo' ? 1 : (id.match(/^en-equipo-(\d)$/) || [])[1];
   view.innerHTML = '';
   document.body.classList.remove('menu'); const sc = document.querySelector('.scrim'); if (sc) sc.remove();
   const m = MODULES.find(x => x.id === id);
-  if (m) renderModule(m); else if (id === 'glosario') renderGlossary(); else if (id === 'comandos') renderCheats(); else renderHome();
-  document.getElementById('topTitle').textContent = m ? 'Módulo ' + m.n + ' · ' + m.title : id === 'glosario' ? 'Glosario' : id === 'comandos' ? 'Comandos' : 'Git sin miedo';
+  if (teamStage) renderTeamPage(+teamStage); else if (m) renderModule(m); else if (id === 'glosario') renderGlossary(); else if (id === 'comandos') renderCheats(); else renderHome();
+  document.getElementById('topTitle').textContent = teamStage ? 'Proyecto en equipo' : m ? 'Módulo ' + m.n + ' · ' + m.title : id === 'glosario' ? 'Glosario' : id === 'comandos' ? 'Comandos' : 'Git sin miedo';
   renderNav(); renderWhoBox();
   if (goTeam) { const t = document.getElementById('equipo'); if (t) t.scrollIntoView(); } else window.scrollTo(0, 0);
 }
