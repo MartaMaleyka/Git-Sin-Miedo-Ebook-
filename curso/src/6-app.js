@@ -32,7 +32,7 @@ function renderModule(m) {
   const acts = m.blocks.filter(b => b.id);
   const steps = h('div', { class: 'steps' }, acts.map((b, i) => h('span', { class: P.done[b.id] ? 'ok' : '' }, (P.done[b.id] ? '✓ ' : '') + 'Actividad ' + (i + 1))));
   view.append(h('header', { class: 'lhead' },
-    h('span', { class: 'eyebrow' }, 'Capítulo ' + m.n + ' del libro · ' + (STAGES.find(s => s[1].includes(m.id)) || [''])[0]),
+    h('span', { class: 'eyebrow' }, 'Módulo ' + m.n + ' · ' + (STAGES.find(s => s[1].includes(m.id)) || [''])[0]),
     h('h1', null, m.title), h('p', { class: 'lead' }, m.short + '.'),
     h('div', { class: 'meta' }, h('span', { class: 'tag goal' }, '🎯 ' + m.goal), h('span', { class: 'tag' }, '⏱ ' + m.time), h('span', { class: 'tag' }, acts.length + ' actividades')), steps));
   m.blocks.forEach(b => view.append(renderBlock(b)));
@@ -45,7 +45,7 @@ function renderHome() {
   const first = MODULES.find(m => modPct(m) < 100) || MODULES[0];
   const started = ALL_ACTS.some(a => P.done[a]);
   view.append(h('header', { class: 'hero' },
-    h('span', { class: 'eyebrow' }, 'Curso interactivo · basado en el libro de Marta Magallón'),
+    h('span', { class: 'eyebrow' }, 'Curso interactivo desde cero · por Marta Magallón'),
     h('h1', null, 'Git sin miedo'),
     h('p', { class: 'lead' }, 'Control de versiones y trabajo en equipo explicado desde cero, practicando. No necesitas saber programar ni instalar nada para empezar: todo pasa en una terminal de práctica dentro de esta página.'),
     h('div', { class: 'row' }, h('a', { class: 'btn', href: '#' + first.id, style: 'text-decoration:none' }, started ? 'Continuar: ' + first.title + ' →' : 'Empezar el curso →'), h('a', { class: 'btn ghost', href: '#comandos', style: 'text-decoration:none' }, 'Ver la hoja de comandos'))));
@@ -53,19 +53,19 @@ function renderHome() {
     h('div', { class: 'mini' }, h('b', null, '❝ Una historia real'), h('p', null, 'Cada tema empieza con el problema, tal como pasa en un equipo.')),
     h('div', { class: 'mini' }, h('b', null, '≈ Una comparación sencilla'), h('p', null, 'Cuadernos, cajas, borradores y semáforos para que la idea se quede.')),
     h('div', { class: 'mini' }, h('b', null, '>_ Práctica en la terminal'), h('p', null, 'Misiones paso a paso con un mapa que dibuja lo que pasa, en vivo.')),
-    h('div', { class: 'mini' }, h('b', null, '✓ Retos y checklist'), h('p', null, 'Quizzes, juegos de ordenar y clasificar, y el checklist del libro.'))),
-    h('p', { class: 'muted', style: 'margin:0' }, 'Tu avance se guarda en este navegador. Puedes repetir cualquier actividad cuando quieras. Y recuerda la promesa del libro: vas a equivocarte, y está bien. Casi todo en Git se puede deshacer.')));
+    h('div', { class: 'mini' }, h('b', null, '✓ Retos y checklist'), h('p', null, 'Quizzes, juegos de ordenar y clasificar, y un checklist para comprobar lo aprendido.'))),
+    h('p', { class: 'muted', style: 'margin:0' }, 'Tu avance se guarda en este navegador. Puedes repetir cualquier actividad cuando quieras. No necesitas conocimientos previos: todo se explica aquí, paso a paso. Vas a equivocarte, y está bien. Casi todo en Git se puede deshacer.')));
   STAGES.forEach(([name, ids]) => {
     view.append(h('div', { class: 'stage-label' }, name));
-    view.append(h('div', { class: 'path' }, ids.map(id => { const m = MODULES.find(x => x.id === id); const p = modPct(m); return h('a', { class: 'pcard' + (p === 100 ? ' done' : ''), href: '#' + id }, h('div', { class: 'top' }, h('span', { class: 'n' }, 'Capítulo ' + m.n), h('span', { class: 'pct', style: 'font:500 .72rem var(--f-mono);color:' + (p === 100 ? 'var(--teal)' : 'var(--muted)') }, p === 100 ? 'Completado ✓' : p + '%')), h('h3', null, m.title), h('p', null, m.short + ' · ' + m.time), h('div', { class: 'bar' }, h('i', { style: 'width:' + p + '%' }))); })));
+    view.append(h('div', { class: 'path' }, ids.map(id => { const m = MODULES.find(x => x.id === id); const p = modPct(m); return h('a', { class: 'pcard' + (p === 100 ? ' done' : ''), href: '#' + id }, h('div', { class: 'top' }, h('span', { class: 'n' }, 'Módulo ' + m.n), h('span', { class: 'pct', style: 'font:500 .72rem var(--f-mono);color:' + (p === 100 ? 'var(--teal)' : 'var(--muted)') }, p === 100 ? 'Completado ✓' : p + '%')), h('h3', null, m.title), h('p', null, m.short + ' · ' + m.time), h('div', { class: 'bar' }, h('i', { style: 'width:' + p + '%' }))); })));
   });
 }
 
 function renderGlossary() {
-  view.append(h('header', { class: 'lhead' }, h('span', { class: 'eyebrow' }, 'Referencia'), h('h1', null, 'Glosario de bolsillo'), h('p', { class: 'lead' }, 'Todas las palabras técnicas del curso, explicadas en una línea. El número indica el capítulo.')));
+  view.append(h('header', { class: 'lhead' }, h('span', { class: 'eyebrow' }, 'Referencia'), h('h1', null, 'Glosario de bolsillo'), h('p', { class: 'lead' }, 'Todas las palabras técnicas del curso, explicadas en una línea. El número indica el módulo donde se explica.')));
   const inp = h('input', { class: 'fillin', id: 'gloss-q', placeholder: 'Busca una palabra: rama, stash, token…', style: 'font-family:var(--f-body)' });
   const list = h('div', { class: 'gloss' });
-  const draw = () => { const q = inp.value.trim().toLowerCase(); list.innerHTML = ''; GLOSSARY.filter(([t, d]) => !q || (t + ' ' + d).toLowerCase().includes(q)).forEach(([t, d, c]) => list.append(h('div', { class: 'gi' }, h('b', null, t), h('span', null, d + ' ', h('a', { href: '#m' + c, class: 'muted', style: 'font-size:.8rem' }, 'cap. ' + c))))); if (!list.children.length) list.append(h('p', { class: 'muted' }, 'No hay resultados para esa palabra.')); };
+  const draw = () => { const q = inp.value.trim().toLowerCase(); list.innerHTML = ''; GLOSSARY.filter(([t, d]) => !q || (t + ' ' + d).toLowerCase().includes(q)).forEach(([t, d, c]) => list.append(h('div', { class: 'gi' }, h('b', null, t), h('span', null, d + ' ', h('a', { href: '#m' + c, class: 'muted', style: 'font-size:.8rem' }, 'módulo ' + c))))); if (!list.children.length) list.append(h('p', { class: 'muted' }, 'No hay resultados para esa palabra.')); };
   inp.addEventListener('input', draw); draw();
   view.append(h('section', { class: 'block' }, inp, list));
 }
@@ -84,7 +84,7 @@ function route() {
   document.body.classList.remove('menu'); const sc = document.querySelector('.scrim'); if (sc) sc.remove();
   const m = MODULES.find(x => x.id === id);
   if (m) renderModule(m); else if (id === 'glosario') renderGlossary(); else if (id === 'comandos') renderCheats(); else renderHome();
-  document.getElementById('topTitle').textContent = m ? 'Cap. ' + m.n + ' · ' + m.title : id === 'glosario' ? 'Glosario' : id === 'comandos' ? 'Comandos' : 'Git sin miedo';
+  document.getElementById('topTitle').textContent = m ? 'Módulo ' + m.n + ' · ' + m.title : id === 'glosario' ? 'Glosario' : id === 'comandos' ? 'Comandos' : 'Git sin miedo';
   renderNav(); window.scrollTo(0, 0);
 }
 window.addEventListener('hashchange', route);

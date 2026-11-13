@@ -463,7 +463,7 @@ class Sim {
   g_checkout(r, a) {
     if (a.includes('--ours') || a.includes('--theirs')) { const f = a.find(x => !x.startsWith('-')); if (!r.merge) return { out: 'error: no hay una fusión en curso', err: true }; const side = a.includes('--ours') ? this.tree(this.headId(r))[f] : this.tree(r.merge.theirs)[f]; r.files[f] = side; return { out: 'Updated 1 path from the index', ok: true, note: 'Elegiste la versión ' + (a.includes('--ours') ? '<b>tuya</b>' : '<b>de la otra rama</b>') + ' completa. Ahora márcalo como resuelto con <code>git add ' + esc(f) + '</code>.' }; }
     const res = this.g_switch(r, a.map(x => x === '-b' ? '-c' : x));
-    res.note = (res.note || '') + ' <span style="opacity:.8">(Funciona, pero en el libro usamos <code>git switch</code>: es la forma moderna y más clara.)</span>';
+    res.note = (res.note || '') + ' <span style="opacity:.8">(Funciona, pero en este curso usamos <code>git switch</code>: es la forma moderna y más clara, porque <code>checkout</code> hace demasiadas cosas distintas.)</span>';
     return res;
   }
   doMerge(r, theirs, name) {
@@ -618,7 +618,7 @@ class Sim {
     const t = names[0]; if (r.tags[t]) return { out: "fatal: tag '" + esc(t) + "' already exists", err: true, note: 'No se mueve una etiqueta publicada: si hubo un error, la corrección es una versión nueva.' };
     const id = names[1] ? this.resolve(r, names[1]) : this.headId(r);
     const msg = this.parseMsg(a);
-    if (!a.includes('-a') || !msg) { r.tags[t] = { id, msg: '' }; return { out: '', ok: true, tagged: t, note: 'Creaste una etiqueta <b>ligera</b>. En el libro recomendamos la <b>anotada</b>: <code>git tag -a ' + esc(t) + ' -m "..."</code>.' }; }
+    if (!a.includes('-a') || !msg) { r.tags[t] = { id, msg: '' }; return { out: '', ok: true, tagged: t, note: 'Creaste una etiqueta <b>ligera</b>. Te recomendamos la <b>anotada</b>, que guarda autor, fecha y mensaje: <code>git tag -a ' + esc(t) + ' -m "..."</code>.' }; }
     r.tags[t] = { id, msg, annotated: true };
     return { out: '', ok: true, tagged: t, annotated: true, note: 'Etiqueta <b>' + esc(t) + '</b> creada sobre el commit ' + id + '. Recuerda: no viaja sola, publícala con <code>git push origin ' + esc(t) + '</code>.' };
   }

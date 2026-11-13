@@ -196,7 +196,7 @@ function rTabs(spec, id) {
 
 /* ---------- checklist del capítulo ---------- */
 function rChecklist(spec, id) {
-  const { box, markDone } = actBox(id, 'Checklist del capítulo', '✓', null, spec.xp || 10);
+  const { box, markDone } = actBox(id, 'Checklist del módulo', '✓', null, spec.xp || 10);
   box.append(h('p', { class: 'muted' }, 'Márcalo con honestidad. Si no puedes marcar un punto, vuelve a esa parte antes de seguir.'));
   const ul = h('ul', { class: 'checklist' });
   const st = P.checks[id] || (P.checks[id] = []);

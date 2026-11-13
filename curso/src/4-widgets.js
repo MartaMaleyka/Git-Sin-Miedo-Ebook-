@@ -132,7 +132,7 @@ W.commitJudge = function (spec, id) {
   };
   inp.addEventListener('keydown', e => { if (e.key === 'Enter') check(); });
   draw();
-  box.append(h('p', null, 'Un buen mensaje responde: ¿qué hace este cambio? Escribe uno para cada situación y el juez lo revisa con las reglas del libro.'), task, h('div', { class: 'fillrow' }, inp, h('button', { class: 'btn', type: 'button', onclick: check }, 'Revisar')), res);
+  box.append(h('p', null, 'Un buen mensaje responde: ¿qué hace este cambio? Escribe uno para cada situación y el juez lo revisa con cinco reglas: empieza con un verbo, es específico, es corto, tiene una sola idea y empieza con mayúscula.'), task, h('div', { class: 'fillrow' }, inp, h('button', { class: 'btn', type: 'button', onclick: check }, 'Revisar')), res);
   return box;
 };
 
@@ -240,7 +240,7 @@ W.mr = function (spec, id) {
     thread.onclick = () => { resolved = true; thread.disabled = true; thread.textContent = 'Hilo resuelto ✓ · Ana aprobó'; upd(); };
     setTimeout(() => { pipe.className = 'job passed'; pipe.lastChild.textContent = 'pipeline: passed'; green = true; upd(); }, 1800);
     merge.onclick = () => { setFb('good', '¡Fusionado! Tus cambios entraron a main' + (document.getElementById('mr-del-' + id).checked ? ' y la rama se borró sola en GitLab.' : '.') + ' Falta un último paso en tu computadora.'); go(6); };
-    card.append(h('div', { class: 'mrh' }, h('b', null, S.title), h('span', { class: 'state open' }, 'Open')), h('p', null, 'GitLab activa el botón Merge cuando se cumplen las condiciones: aprobación, hilos resueltos y pipeline en verde.'), thread, pipe, del, h('div', { class: 'row' }, merge));
+    card.append(h('div', { class: 'mrh' }, h('b', null, S.title), h('span', { class: 'state open' }, 'Open')), h('p', { html: 'GitLab activa el botón Merge cuando se cumplen las condiciones: aprobación, hilos resueltos y <b>pipeline</b> en verde. El pipeline es una revisión automática que GitLab ejecuta con cada cambio (lo verás a fondo en el módulo 9).' }), thread, pipe, del, h('div', { class: 'row' }, merge));
   };
   // 6: después del merge
   steps[6] = () => {
@@ -300,7 +300,7 @@ W.undo = function (spec, id) {
       ['En un commit que solo está en mi computadora (sin push)', { q: '¿Qué quieres hacer con ese commit?', o: [['Cambiar solo el mensaje', { r: 'git commit --amend -m "Mensaje correcto"', d: 'Reemplaza el último commit. Solo si no has hecho push.' }], ['Deshacerlo, pero conservar el trabajo', { r: 'git reset --soft HEAD~1', d: 'El commit se deshace y los cambios quedan en la caja, listos para otro commit.' }], ['Lo hice en la rama equivocada', { r: 'git branch feature/mi-cambio\ngit reset --hard HEAD~1\ngit switch feature/mi-cambio', d: 'Creas la rama apuntando a tu commit, lo sacas de main y te cambias a ella. Tu commit queda a salvo.' }], ['Tirarlo con todo su trabajo', { r: 'git reset --hard HEAD~1', d: '<b>Borra</b> el commit y sus cambios. Revisa antes con <code>git status</code> y <code>git log</code>. Si te arrepientes: <code>git reflog</code>.' }]] }],
       ['En un commit que ya publiqué (con push)', { r: 'git revert código-del-commit\ngit push', d: 'Lo que ya publicaste no se reescribe: se corrige con un commit nuevo que anula al otro. No afecta a tus compañeros.' }],
       ['Borré algo y lo quiero de vuelta', { r: 'git reflog\ngit switch -c rescate código', d: 'El reflog anota cada movimiento. Busca el punto que quieres y crea una rama ahí. Límite: no recupera lo que nunca tuvo commit.' }],
-      ['Subí una contraseña o un token', { r: 'Cambia o revoca el secreto YA', d: 'Ningún comando lo arregla: aunque lo borres, sigue en la historia. Primero cambia la contraseña o revoca el token, luego avisa a seguridad. Lo ves en el capítulo 10.' }]
+      ['Subí una contraseña o un token', { r: 'Cambia o revoca el secreto YA', d: 'Ningún comando lo arregla: aunque lo borres, sigue en la historia. Primero cambia la contraseña o revoca el token, luego avisa a seguridad. Lo ves en detalle en el módulo 10.' }]
     ]
   };
   const seen = new Set(); const wrap = h('div', { class: 'wizard' });
