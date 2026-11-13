@@ -2,10 +2,10 @@
    El proyecto del curso: sitio-oficina
    Un solo repositorio que crece módulo a módulo. Cada misión empieza
    con el proyecto tal como quedó al final de la anterior, más lo que
-   el equipo (Ana y Luis) publicó mientras tanto.
+   el equipo (‹A› y ‹B›) publicó mientras tanto.
    ================================================================ */
 const PROJ = 'sitio-oficina';
-const PROJECT_URL = 'git@gitlab.com:tu-usuario/sitio-oficina.git';
+const PROJECT_URL = 'git@gitlab.com:oficina/sitio-oficina.git';
 
 function seedProject(sim) {
   sim.clonable[PROJECT_URL] = (s, url) => seedRemote(s, url, ctx => {
@@ -49,8 +49,8 @@ const ROADMAP = {
   m14: 'Cierras el issue #7 con la página de preguntas frecuentes: el flujo completo.'
 };
 const PROJECT_STAGES = [
-  ['m2', ['git config --global user.name "Tu Nombre"', 'git config --global user.email "tu-correo@ejemplo.com"', 'git clone ' + PROJECT_URL, 'cd ' + PROJ]],
-  ['m3', [s => { const r = s.repos[PROJ]; r.files['README.md'] += 'Hecho por: Tu Nombre\n'; r.files['notas-personales.txt'] = 'No olvidar: preguntar a Ana por el horario\n'; },
+  ['m2', ['git config --global user.name "‹YO›"', 'git config --global user.email "‹MAIL›"', 'git clone ' + PROJECT_URL, 'cd ' + PROJ]],
+  ['m3', [s => { const r = s.repos[PROJ]; r.files['README.md'] += nm('Hecho por: ‹YO›\n'); r.files['notas-personales.txt'] = nm('No olvidar: preguntar a ‹A› por el horario\n'); },
     team('ana', 'Actualiza horario de atención', t => { t['contacto.md'] = t['contacto.md'].replace('8:00 a 4:00', '8:00 a 5:00'); })], 'pre'],
   ['m3', ['echo "notas-personales.txt" > .gitignore', 'git add README.md .gitignore', 'git commit -m "Agrega mi nombre al README e ignora notas personales"', 'git pull', 'git push']],
   ['m4', ['git pull', 'git switch -c feature/seccion-sobre-mi', 'echo "# Sobre mí" > sobre-mi.md', 'git add sobre-mi.md', 'git commit -m "Agrega sección Sobre mí"', 'echo "Me encargo de mantener la página de contacto." >> sobre-mi.md', 'git commit -am "Agrega presentación en Sobre mí"', 'git push -u origin feature/seccion-sobre-mi', 'git switch main']],
@@ -61,7 +61,7 @@ const PROJECT_STAGES = [
   ['m7a', ['git restore README.md', 'echo "Correo: info@oficina.com" >> contacto.md', 'git commit -am "Agrega correo de contacto"', 'git push']],
   ['m7b', [team('luis', 'Agrega reporte mensual', t => { t['reporte.md'] = '# Reporte mensual\n\nTotal: 1,240\n'; }), 'git pull', 'git switch -c feature/reporte', 'echo "# Reporte mensual" > reporte.md', 'echo "" >> reporte.md', 'echo "Total: 0 (formato nuevo)" >> reporte.md', 'git commit -am "Cambia formato de totales"', 'git push -u origin feature/reporte'], 'pre'],
   ['m7b', [s => s.run('git revert ' + byMsg(s, 'Cambia formato de totales')), 'git push', 'git restore reporte.md', 'git switch main', 'git branch -D feature/reporte', 'git push origin --delete feature/reporte']],
-  ['m7c', ['echo "Ana: diseño · Luis: reportes · Tú: contacto" > equipo.md', 'git add equipo.md', 'git commit -m "Agrega lista del equipo"'], 'pre'],
+  ['m7c', ['echo "‹A›: diseño · ‹B›: reportes · Tú: contacto" > equipo.md', 'git add equipo.md', 'git commit -m "Agrega lista del equipo"'], 'pre'],
   ['m7c', ['git reset --hard HEAD~1', s => s.run('git switch -c rescate ' + byMsg(s, 'Agrega lista del equipo')), 'git switch main', 'git merge rescate', 'git branch -d rescate', 'git push']],
   ['m12', [team('luis', 'Agrega filtro por fecha en la búsqueda', t => { t['busqueda.md'] = '# Búsqueda\n\nFiltro por fecha: desde / hasta\n'; }),
     team('ana', 'Corrige typo en el README', t => { t['README.md'] = t['README.md'].replace('Página web', 'Sitio web'); }),

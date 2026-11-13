@@ -18,6 +18,25 @@ function renderNav() {
   nav.append(link('glosario', 'Aa', 'Glosario de bolsillo', null), link('comandos', '$_', 'Hoja de comandos', null));
 }
 
+const AV = { marcos: 'var(--teal)', katherine: 'var(--accent)', cesar: 'var(--gold)' };
+function teamBlock(intro) {
+  const box = h('section', { class: 'block' + (hasWho() ? '' : ' act') }, h('div', { class: 'kind' }, h('i', null, '👥'), 'El equipo de sitio-oficina'),
+    h('p', { html: intro }));
+  const row = h('div', { class: 'team' });
+  Object.entries(TEAM).forEach(([k, t]) => row.append(h('button', { class: 'member' + (hasWho() && k === WHO ? ' sel' : ''), type: 'button', onclick: () => {
+    WHO = k; try { localStorage.setItem('gsm-curso-who', k); } catch (e) {}
+    toast(nm('Ahora eres <b>‹YO›</b>. Tus compañeros: ‹A› y ‹B›.')); route();
+  } }, h('span', { class: 'av', style: 'background:' + AV[k] }, t.name[0]), h('b', null, t.name), h('small', null, t.mail), h('small', null, hasWho() && k === WHO ? 'Eres tú ✓' : 'Ser ' + t.name))));
+  box.append(row);
+  if (hasWho()) box.append(h('p', { class: 'muted', style: 'margin:0', html: 'Eres <b>‹YO›</b>. En las prácticas, <b>‹A›</b> y <b>‹B›</b> publican cambios, revisan tus Merge Requests y a veces tocan lo mismo que tú. Puedes cambiar de persona cuando quieras.' }));
+  else box.append(h('p', { class: 'muted', style: 'margin:0' }, 'Si todavía no eliges, practicarás como Marcos.'));
+  return box;
+}
+function renderWhoBox() {
+  const el = document.getElementById('whobox'); el.innerHTML = '';
+  el.append(h('span', { class: 'av', style: 'width:26px;height:26px;border-radius:50%;display:grid;place-items:center;color:#fff;font:700 .8rem var(--f-display);background:' + AV[WHO] }, me().name[0]),
+    h('span', null, 'Eres ', h('b', null, me().name)), h('a', { href: '#equipo', style: 'font-size:.78rem' }, hasWho() ? 'cambiar' : 'elegir'));
+}
 function renderBlock(b) {
   if (b.story) return h('section', { class: 'block story' }, h('div', { class: 'kind' }, h('i', null, '❝'), 'Historia real'), h('div', { html: b.story }));
   if (b.analogy) return h('section', { class: 'block analogy' }, h('div', { class: 'kind' }, h('i', null, '≈'), 'Para entenderlo fácil'), h('div', { html: b.analogy }));
@@ -36,6 +55,7 @@ function renderModule(m) {
     h('h1', null, m.title), h('p', { class: 'lead' }, m.short + '.'),
     ROADMAP[m.id] ? h('div', { class: 'fb info', style: 'margin:0', html: '📁 <b>Tu proyecto <code>sitio-oficina</code> en este módulo:</b> ' + ROADMAP[m.id] }) : null,
     h('div', { class: 'meta' }, h('span', { class: 'tag goal' }, '🎯 ' + m.goal), h('span', { class: 'tag' }, '⏱ ' + m.time), h('span', { class: 'tag' }, acts.length + ' actividades')), steps));
+  if (m.id === 'm2') view.append(teamBlock('Antes de configurar Git, elige quién eres en el equipo. Tu nombre y tu correo serán los de esa persona, y los otros dos serán tus compañeros en todo el proyecto.'));
   m.blocks.forEach(b => view.append(renderBlock(b)));
   view.append(h('nav', { class: 'navbtns', 'aria-label': 'Navegación entre módulos' },
     prev ? h('a', { class: 'btn ghost', href: '#' + prev.id, style: 'text-decoration:none' }, '← ' + prev.title) : h('a', { class: 'btn ghost', href: '#inicio', style: 'text-decoration:none' }, '← Inicio'),
@@ -56,8 +76,9 @@ function renderHome() {
     h('div', { class: 'mini' }, h('b', null, '>_ Práctica en la terminal'), h('p', null, 'Misiones paso a paso con un mapa que dibuja lo que pasa, en vivo.')),
     h('div', { class: 'mini' }, h('b', null, '✓ Retos y checklist'), h('p', null, 'Quizzes, juegos de ordenar y clasificar, y un checklist para comprobar lo aprendido.'))),
     h('p', { class: 'muted', style: 'margin:0' }, 'Tu avance se guarda en este navegador. Puedes repetir cualquier actividad cuando quieras. No necesitas conocimientos previos: todo se explica aquí, paso a paso. Vas a equivocarte, y está bien. Casi todo en Git se puede deshacer.')));
+  view.append(Object.assign(teamBlock('<code>sitio-oficina</code> lo llevan tres personas: <b>Marcos</b>, <b>Katherine</b> y <b>César</b>. ¿Quién eres tú? Los otros dos serán tus compañeros durante todo el curso.'), { id: 'equipo' }));
   view.append(h('section', { class: 'block analogy' }, h('div', { class: 'kind' }, h('i', null, '📁'), 'Un solo proyecto, de principio a fin'),
-    h('p', { html: 'Durante todo el curso trabajas en <b>el mismo proyecto</b>: <code>sitio-oficina</code>, la página web de la oficina que mantienes con Ana y Luis. Lo descargas en el módulo 2 y cada módulo le agrega algo, como en un equipo real. Cuando empieces una práctica, el proyecto estará tal como quedó en la anterior, más lo que tu equipo haya publicado mientras tanto.' }),
+    h('p', { html: 'Durante todo el curso trabajas en <b>el mismo proyecto</b>: <code>sitio-oficina</code>, la página web de la oficina que mantienes con ‹A› y ‹B›. Lo descargas en el módulo 2 y cada módulo le agrega algo, como en un equipo real. Cuando empieces una práctica, el proyecto estará tal como quedó en la anterior, más lo que tu equipo haya publicado mientras tanto.' }),
     h('ol', { class: 'olist' }, MODULES.filter(m => ['m2', 'm3', 'm4', 'm5', 'm6', 'm7', 'm12', 'm13', 'm14'].includes(m.id)).map(m => h('li', null, h('span', { class: 'n' }, m.n), h('span', { html: '<a href="#' + m.id + '">' + esc(m.title) + '</a>: ' + ROADMAP[m.id] }))))));
   STAGES.forEach(([name, ids]) => {
     view.append(h('div', { class: 'stage-label' }, name));
@@ -83,13 +104,14 @@ function renderCheats() {
 }
 
 function route() {
-  const id = location.hash.slice(1) || 'inicio';
+  let id = location.hash.slice(1) || 'inicio'; const goTeam = id === 'equipo'; if (goTeam) id = 'inicio';
   view.innerHTML = '';
   document.body.classList.remove('menu'); const sc = document.querySelector('.scrim'); if (sc) sc.remove();
   const m = MODULES.find(x => x.id === id);
   if (m) renderModule(m); else if (id === 'glosario') renderGlossary(); else if (id === 'comandos') renderCheats(); else renderHome();
   document.getElementById('topTitle').textContent = m ? 'Módulo ' + m.n + ' · ' + m.title : id === 'glosario' ? 'Glosario' : id === 'comandos' ? 'Comandos' : 'Git sin miedo';
-  renderNav(); window.scrollTo(0, 0);
+  renderNav(); renderWhoBox();
+  if (goTeam) { const t = document.getElementById('equipo'); if (t) t.scrollIntoView(); } else window.scrollTo(0, 0);
 }
 window.addEventListener('hashchange', route);
 
@@ -104,4 +126,11 @@ resetBtn.addEventListener('click', () => {
   if (resetBtn.dataset.confirm) { P = { done: {}, checks: {}, xp: 0, seen: {} }; save(); delete resetBtn.dataset.confirm; resetBtn.textContent = 'Reiniciar progreso'; refreshProgress(); route(); toast('Progreso reiniciado'); return; }
   resetBtn.dataset.confirm = '1'; resetBtn.textContent = '¿Seguro? Toca otra vez'; setTimeout(() => { delete resetBtn.dataset.confirm; resetBtn.textContent = 'Reiniciar progreso'; }, 3500);
 });
+/* Los textos llevan marcas ‹YO› ‹A› ‹B›: se cambian por los nombres del equipo al mostrarse. */
+function fixNames(root) {
+  const w = document.createTreeWalker(root, NodeFilter.SHOW_TEXT); let n;
+  while ((n = w.nextNode())) if (n.nodeValue.indexOf('‹') >= 0) n.nodeValue = nm(n.nodeValue);
+}
+new MutationObserver(ms => ms.forEach(m => { if (m.type === 'characterData') { if (m.target.nodeValue.indexOf('‹') >= 0) m.target.nodeValue = nm(m.target.nodeValue); } else m.addedNodes.forEach(x => { if (x.nodeType === 3) { if (x.nodeValue.indexOf('‹') >= 0) x.nodeValue = nm(x.nodeValue); } else if (x.nodeType === 1) fixNames(x); }); }))
+  .observe(document.body, { childList: true, subtree: true, characterData: true });
 refreshProgress(); route();

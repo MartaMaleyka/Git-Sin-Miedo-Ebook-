@@ -330,6 +330,15 @@ textarea.fillin{min-height:110px;resize:vertical;line-height:1.5}
 .gloss .gi{display:grid;grid-template-columns:minmax(120px,200px) minmax(0,1fr);gap:12px;padding:8px 10px;border-bottom:1px solid var(--line);font-size:.92rem}
 .gloss .gi b{font-family:var(--f-mono);font-size:.84rem}
 @media (max-width:560px){.gloss .gi{grid-template-columns:minmax(0,1fr);gap:2px}.block{padding:18px 16px}.resetviz{grid-template-columns:minmax(0,1fr)}}
+.whobox{font-size:.84rem;display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:0 4px}
+.whobox b{font-family:var(--f-display)}
+.team{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:10px}
+.member{border:1.5px solid var(--line);border-radius:14px;background:var(--bg);padding:14px;text-align:left;cursor:pointer;display:grid;gap:4px}
+.member:hover{border-color:var(--accent)}
+.member.sel{border-color:var(--teal);background:var(--teal-soft)}
+.member .av{width:38px;height:38px;border-radius:50%;display:grid;place-items:center;color:#fff;font:700 1rem var(--f-display)}
+.member b{font-family:var(--f-display);font-size:1.05rem}
+.member small{color:var(--muted);font-size:.8rem}
 .cert{border:2px solid var(--accent);border-radius:20px;padding:28px;text-align:center;display:grid;gap:10px;background:var(--surface)}
 .cert h2{font-size:1.8rem}
 @media (prefers-reduced-motion:reduce){*{transition:none !important;animation:none !important}}
@@ -344,6 +353,7 @@ textarea.fillin{min-height:110px;resize:vertical;line-height:1.5}
       <div class="bar"><i id="xpbar"></i></div>
       <div class="level" id="level">Nivel 1 · Curiosa o curioso</div>
     </div>
+    <div class="whobox" id="whobox"></div>
     <nav class="nav" id="nav"></nav>
     <div class="sidefoot">
       <button class="chipbtn" id="themeBtn" type="button">Cambiar tema</button>
@@ -361,7 +371,27 @@ textarea.fillin{min-height:110px;resize:vertical;line-height:1.5}
    Simulador de Git: una versión pequeña y honesta de Git que vive
    en el navegador. No toca tu computadora: todo es de práctica.
    ================================================================ */
-const AUTHORS = { ana: 'Ana Pérez <ana@ejemplo.com>', luis: 'Luis Gómez <luis@ejemplo.com>' };
+/* El equipo del proyecto. Quien estudia elige quién es; los otros dos son sus compañeros. */
+const TEAM = {
+  marcos: { name: 'Marcos', mail: 'marcos@oficina.com' },
+  katherine: { name: 'Katherine', mail: 'katherine@oficina.com' },
+  cesar: { name: 'César', mail: 'cesar@oficina.com' }
+};
+let WHO = 'marcos';
+try { const w = localStorage.getItem('gsm-curso-who'); if (TEAM[w]) WHO = w; } catch (e) {}
+const hasWho = () => { try { return !!TEAM[localStorage.getItem('gsm-curso-who')]; } catch (e) { return false; } };
+const me = () => TEAM[WHO];
+const mates = () => Object.keys(TEAM).filter(k => k !== WHO).map(k => TEAM[k]);
+/* Cambia las marcas ‹YO› ‹MAIL› ‹A› ‹B› por los nombres reales del equipo. */
+function nm(s) {
+  if (typeof s !== 'string' || s.indexOf('‹') < 0) return s;
+  const [a, b] = mates();
+  return s.replace(/‹YO›/g, me().name).replace(/‹MAIL›/g, me().mail).replace(/‹A›/g, a.name).replace(/‹B›/g, b.name);
+}
+const AUTHORS = {
+  get ana() { const a = mates()[0]; return a.name + ' <' + a.mail + '>'; },
+  get luis() { const b = mates()[1]; return b.name + ' <' + b.mail + '>'; }
+};
 
 function rid() { let s = ''; for (let i = 0; i < 7; i++) s += '0123456789abcdef'[Math.floor(Math.random() * 16)]; return s; }
 function clone(o) { return JSON.parse(JSON.stringify(o)); }
@@ -455,10 +485,11 @@ class Sim {
   laneOf(r, name) { if (!(name in r.lanes)) r.lanes[name] = Object.keys(r.lanes).length; return r.lanes[name]; }
   mkCommit(r, { msg, tree, parents, author, lane }) {
     const id = rid();
-    this.commits[id] = { id, msg, tree: clone(tree), parents: parents.filter(Boolean), author: author || this.authorStr(), n: ++this.counter, lane: this.laneOf(r, lane || r.head || 'main'), date: new Date(Date.now() - (1000 - this.counter) * 3600e3).toISOString() };
+    const t = clone(tree); Object.keys(t).forEach(k => { t[k] = nm(t[k]); });
+    this.commits[id] = { id, msg: nm(msg), tree: t, parents: parents.filter(Boolean), author: nm(author || this.authorStr()), n: ++this.counter, lane: this.laneOf(r, lane || r.head || 'main'), date: new Date(Date.now() - (1000 - this.counter) * 3600e3).toISOString() };
     return id;
   }
-  authorStr() { return (this.user.name || 'Tu Nombre') + ' <' + (this.user.email || 'tu-correo@ejemplo.com') + '>'; }
+  authorStr() { return (this.user.name || '‹YO›') + ' <' + (this.user.email || '‹MAIL›') + '>'; }
   ancestors(id) { const set = new Set(), st = [id]; while (st.length) { const c = st.pop(); if (!c || set.has(c)) continue; set.add(c); st.push(...(this.commits[c]?.parents || [])); } return set; }
   isAnc(a, b) { return !a || this.ancestors(b).has(a); } // a es ancestro de b
   mergeBase(a, b) { const A = this.ancestors(a); const q = [b], seen = new Set(); let best = null; while (q.length) { const c = q.shift(); if (!c || seen.has(c)) continue; seen.add(c); if (A.has(c)) { if (!best || this.commits[c].n > this.commits[best].n) best = c; continue; } q.push(...this.commits[c].parents); } return best; }
@@ -518,7 +549,7 @@ class Sim {
 
   /* ---------- ejecutar una línea ---------- */
   run(line) {
-    line = line.trim();
+    line = nm(line).trim();
     if (!line) return { out: '' };
     const t = tokenize(line);
     const cmd = t[0];
@@ -1021,7 +1052,7 @@ function seedRemote(sim, url, build) {
 function setupClonedRepo(sim, name, build, opts = {}) {
   const url = 'git@gitlab.com:tu-usuario/' + name + '.git';
   seedRemote(sim, url, build);
-  sim.user = { name: 'Tu Nombre', email: 'tu-correo@ejemplo.com' };
+  sim.user = { name: '‹YO›', email: '‹MAIL›' };
   const res = sim.gClone([url]); sim.cwd = '~/' + name;
   if (opts.protectMain) sim.remotes[url].protected = true;
   return { url, repo: sim.repos[name], res };
@@ -1343,7 +1374,7 @@ function rTerm(spec, id) {
     const resetBtn = h('button', { class: 'chipbtn', type: 'button' }, 'Reiniciar práctica');
     const hint = h('div', { class: 'hintline', hidden: true });
     hintBtn.onclick = () => { const g = spec.goals[gi]; if (!g) return; hint.hidden = false; hint.innerHTML = g.hint ? 'Prueba con: <code>' + esc(g.hint) + '</code>' + (g.why ? '<br>' + g.why : '') : 'Revisa el objetivo y usa <code>git status</code> para orientarte.'; };
-    fillBtn.onclick = () => { const g = spec.goals[gi]; if (g && g.hint) { input.value = g.hint; input.focus(); } };
+    fillBtn.onclick = () => { const g = spec.goals[gi]; if (g && g.hint) { input.value = nm(g.hint); input.focus(); } };
     resetBtn.onclick = () => start();
     goalsEl.append(h('h4', null, finished ? '¡Misión cumplida! 🎉' : 'Tu misión'), ol, h('div', { class: 'row', style: 'margin-top:8px;gap:6px' }, finished ? null : hintBtn, finished ? null : fillBtn, resetBtn), hint);
     if (finished && spec.outro) goalsEl.append(h('div', { class: 'hintline', html: spec.outro }));
@@ -1377,7 +1408,7 @@ function rTerm(spec, id) {
     } }, a.label)));
     viz.insertBefore(bar, mapEl);
   }
-  (spec.quick || ['git status', 'git log --oneline', 'ls', 'help']).forEach(q => quick.append(h('button', { type: 'button', onclick: () => { input.value = q; input.focus(); } }, q)));
+  (spec.quick || ['git status', 'git log --oneline', 'ls', 'help']).forEach(q => quick.append(h('button', { type: 'button', onclick: () => { input.value = nm(q); input.focus(); } }, nm(q))));
   function start() {
     sim = new Sim(); if (spec.setup) spec.setup(sim);
     gi = 0; finished = false; out.innerHTML = '';
@@ -1397,11 +1428,11 @@ const W = {};
 
 /* Cap. 0 — mismo problema, con y sin Git */
 W.compare = function (spec, id) {
-  const { box, markDone } = actBox(id, 'Ana y Luis: el mismo problema, dos finales', '▶', null, 15);
+  const { box, markDone } = actBox(id, '‹A› y ‹B›: el mismo problema, dos finales', '▶', null, 15);
   const seen = new Set();
   const flows = {
-    sin: ['Ana cambia el horario de atención en su copia de la página.', 'Al mismo tiempo, Luis corrige el teléfono en <i>su</i> copia.', 'Ana sube su versión al servidor.', 'Luis sube la suya <b>después</b>: su archivo todavía tiene el horario viejo.', '<b>Resultado:</b> el teléfono quedó bien, pero el horario volvió a ser el viejo. Un usuario llega a una oficina cerrada. Nadie sabe qué pasó.'],
-    con: ['Ana guarda su cambio: <code>Actualiza horario de atención</code>.', 'Luis guarda el suyo: <code>Corrige teléfono de contacto</code>.', 'Cuando Luis intenta publicar, Git le avisa: <i>hay cambios nuevos de Ana</i>.', 'Luis los trae primero. Git junta los dos cambios porque tocan partes distintas.', '<b>Resultado:</b> se publica todo junto. Y cualquiera puede ver quién cambió el horario y cuándo.']
+    sin: ['‹A› cambia el horario de atención en su copia de la página.', 'Al mismo tiempo, ‹B› corrige el teléfono en <i>su</i> copia.', '‹A› sube su versión al servidor.', '‹B› sube la suya <b>después</b>: su archivo todavía tiene el horario viejo.', '<b>Resultado:</b> el teléfono quedó bien, pero el horario volvió a ser el viejo. Un usuario llega a una oficina cerrada. Nadie sabe qué pasó.'],
+    con: ['‹A› guarda su cambio: <code>Actualiza horario de atención</code>.', '‹B› guarda el suyo: <code>Corrige teléfono de contacto</code>.', 'Cuando ‹B› intenta publicar, Git le avisa: <i>hay cambios nuevos de ‹A›</i>.', '‹B› los trae primero. Git junta los dos cambios porque tocan partes distintas.', '<b>Resultado:</b> se publica todo junto. Y cualquiera puede ver quién cambió el horario y cuándo.']
   };
   const pane = h('ol', { class: 'olist' }); let mode = null, step = 0;
   const nextBtn = h('button', { class: 'btn teal', type: 'button', hidden: true }, 'Siguiente paso');
@@ -1414,7 +1445,7 @@ W.compare = function (spec, id) {
   const b1 = h('button', { class: 'btn ghost', type: 'button', onclick: () => { mode = 'sin'; step = 0; draw(); b1.className = 'btn'; b2.className = 'btn ghost'; } }, '😬 Sin Git');
   const b2 = h('button', { class: 'btn ghost', type: 'button', onclick: () => { mode = 'con'; step = 0; draw(); b2.className = 'btn'; b1.className = 'btn ghost'; } }, '😌 Con Git');
   nextBtn.onclick = () => { step++; draw(); };
-  box.append(h('p', null, 'Ana y Luis mantienen la página web de su oficina. Mira la historia de las dos formas.'), h('div', { class: 'row' }, b1, b2), pane, h('div', { class: 'row' }, nextBtn));
+  box.append(h('p', null, '‹A› y ‹B› mantienen la página web de su oficina. Mira la historia de las dos formas.'), h('div', { class: 'row' }, b1, b2), pane, h('div', { class: 'row' }, nextBtn));
   return box;
 };
 
@@ -1425,9 +1456,9 @@ W.journey = function (spec, id) {
     { b: 'Editar el archivo', where: [1, 0, 0], txt: 'Cambiaste <code>contacto.md</code>. El cambio existe solo en tu carpeta. Si cierras sin guardar, se pierde.' },
     { b: 'git commit', where: [2, 0, 0], txt: 'Guardaste un <b>punto de guardado</b> en tu cuaderno. Sigue <b>solo en tu computadora</b>. Si tu disco se daña, se pierde. Y tu equipo no lo ha visto.' },
     { b: 'git push', where: [2, 2, 0], txt: 'Enviaste tus commits a GitLab. <b>Ahora el equipo puede verlos.</b>' },
-    { b: 'git pull (Luis)', where: [2, 2, 2], txt: 'Luis trae tus cambios a su computadora. El viaje terminó: los tres lugares tienen lo mismo.' }
+    { b: 'git pull (‹B›)', where: [2, 2, 2], txt: '‹B› trae tus cambios a su computadora. El viaje terminó: los tres lugares tienen lo mismo.' }
   ];
-  const places = ['💻 Tu computadora', '☁️ GitLab (remoto)', '💻 Compu de Luis'];
+  const places = ['💻 Tu computadora', '☁️ GitLab (remoto)', '💻 Compu de ‹B›'];
   const labels = ['—', 'cambio sin guardar', 'commit a3f9c21'];
   let st = -1; const grid = h('div', { class: 'grid2' }); const msg = h('div', { class: 'fb info' }, 'Pulsa el primer botón para empezar.');
   const btns = h('div', { class: 'row' });
@@ -1588,7 +1619,7 @@ W.mr = function (spec, id) {
   };
   // 1: título
   steps[1] = () => {
-    const opts = ['Cambios', 'Rama de Ana', 'Agrega sección Sobre mí con mi presentación', 'fix'];
+    const opts = ['Cambios', 'Rama de ‹A›', 'Agrega sección Sobre mí con mi presentación', 'fix'];
     card.append(h('div', { class: 'mrh' }, h('b', null, 'Paso 2 · El título')), h('p', null, 'Igual que un buen commit: empieza con un verbo y di qué hace el cambio.'));
     const o = h('div', { class: 'opts' }); opts.forEach(t => o.append(h('button', { class: 'opt', type: 'button', onclick: () => { if (t.startsWith('Agrega')) { S.title = t; setFb('good', 'Título claro: quien revisa ya sabe de qué se trata antes de abrir nada.'); go(2); } else setFb('badfb', '«' + t + '» no dice qué cambia. ¿Qué entendería alguien que no sabe nada de tu trabajo?'); } }, t)));
     card.append(o);
@@ -1615,7 +1646,7 @@ W.mr = function (spec, id) {
   // 4: comentario bloqueante
   steps[4] = () => {
     card.append(h('div', { class: 'mrh' }, h('b', null, S.title), h('span', { class: 'state open' }, 'Open')),
-      h('div', { class: 'comment', html: '<b>Ana</b> · <i>Bloqueante</i><br>En <code>sobre-mi.md</code> línea 3 falta tu correo de contacto. Sin eso, la sección queda incompleta.' }),
+      h('div', { class: 'comment', html: '<b>‹A›</b> · <i>Bloqueante</i><br>En <code>sobre-mi.md</code> línea 3 falta tu correo de contacto. Sin eso, la sección queda incompleta.' }),
       h('p', null, '¿Cómo atiendes el comentario?'));
     const o = h('div', { class: 'opts' });
     [['Corrijo en mi rama, hago commit y git push a la misma rama', true, 'Exacto: no hace falta otra MR. Al hacer push a la misma rama, la MR se actualiza sola.'], ['Abro una Merge Request nueva con la corrección', false, 'No hace falta: el push a la misma rama actualiza la MR que ya existe.'], ['Le respondo "así está bien" y fusiono', false, 'Un comentario bloqueante se corrige antes de fusionar. Si no estás de acuerdo, se explica con respeto, no se ignora.']].forEach(([t, ok, w]) => o.append(h('button', { class: 'opt', type: 'button', onclick: () => { if (ok) { setFb('good', w); go(5); } else setFb('badfb', w); } }, t)));
@@ -1629,7 +1660,7 @@ W.mr = function (spec, id) {
     const del = h('label', { style: 'display:flex;gap:8px;align-items:center;font-size:.9rem' }, h('input', { type: 'checkbox', id: 'mr-del-' + id, checked: true }), 'Delete source branch');
     let resolved = false, green = false;
     const upd = () => { merge.disabled = !(resolved && green); };
-    thread.onclick = () => { resolved = true; thread.disabled = true; thread.textContent = 'Hilo resuelto ✓ · Ana aprobó'; upd(); };
+    thread.onclick = () => { resolved = true; thread.disabled = true; thread.textContent = 'Hilo resuelto ✓ · ‹A› aprobó'; upd(); };
     setTimeout(() => { pipe.className = 'job passed'; pipe.lastChild.textContent = 'pipeline: passed'; green = true; upd(); }, 1800);
     merge.onclick = () => { setFb('good', '¡Fusionado! Tus cambios entraron a main' + (document.getElementById('mr-del-' + id).checked ? ' y la rama se borró sola en GitLab.' : '.') + ' Falta un último paso en tu computadora.'); go(6); };
     card.append(h('div', { class: 'mrh' }, h('b', null, S.title), h('span', { class: 'state open' }, 'Open')), h('p', { html: 'GitLab activa el botón Merge cuando se cumplen las condiciones: aprobación, hilos resueltos y <b>pipeline</b> en verde. El pipeline es una revisión automática que GitLab ejecuta con cada cambio (lo verás a fondo en el módulo 9).' }), thread, pipe, del, h('div', { class: 'row' }, merge));
@@ -1653,17 +1684,17 @@ W.mr = function (spec, id) {
 
 /* Cap. 6 — resolver un conflicto a mano */
 W.conflict = function (spec, id) {
-  const { box, markDone } = actBox(id, 'Resuelve el conflicto de Ana', '⚡', null, 30);
+  const { box, markDone } = actBox(id, 'Resuelve el conflicto de ‹A›', '⚡', null, 30);
   const raw = '# Contacto\n\n<<<<<<< HEAD\nHorario: lunes a viernes, 8:00 a 5:00\n=======\nHorario: lunes a viernes, 8:00 a 4:30\n>>>>>>> main\n\nTeléfono: 500-0000\n';
   const view = h('div', { class: 'conflict', html: '# Contacto\n\n<span class="mk">&lt;&lt;&lt;&lt;&lt;&lt;&lt; HEAD</span><span class="ours">Horario: lunes a viernes, 8:00 a 5:00</span><span class="mk">=======</span><span class="theirs">Horario: lunes a viernes, 8:00 a 4:30</span><span class="mk">&gt;&gt;&gt;&gt;&gt;&gt;&gt; main</span>\nTeléfono: 500-0000' });
   const ctx = h('div', { class: 'grid2' },
-    h('div', { class: 'mini', style: 'background:var(--teal-soft)' }, h('b', null, 'Tu cambio (HEAD)'), h('p', { html: 'Ana: <code>Cambia horario general a 5:00</code>. El horario de toda la semana se extendió.' })),
-    h('div', { class: 'mini', style: 'background:var(--gold-soft)' }, h('b', null, 'El cambio que llega (main)'), h('p', { html: 'Luis: <code>Ajusta horario del viernes por nueva disposición</code>. Los viernes se cierra antes.' })));
+    h('div', { class: 'mini', style: 'background:var(--teal-soft)' }, h('b', null, 'Tu cambio (HEAD)'), h('p', { html: '‹A›: <code>Cambia horario general a 5:00</code>. El horario de toda la semana se extendió.' })),
+    h('div', { class: 'mini', style: 'background:var(--gold-soft)' }, h('b', null, 'El cambio que llega (main)'), h('p', { html: '‹B›: <code>Ajusta horario del viernes por nueva disposición</code>. Los viernes se cierra antes.' })));
   const fb = h('div', { class: 'fb info', html: 'Primero lee los dos cambios. ¿Qué intentaba hacer cada uno? Luego elige.' });
   const editor = h('textarea', { class: 'fillin', id: 'cf-' + id, hidden: true }); editor.value = raw;
   const finish = h('button', { class: 'btn teal', type: 'button', hidden: true }, 'git add contacto.md + git commit');
   const o = h('div', { class: 'opts' });
-  [['Accept Current Change: me quedo con mi versión (5:00)', 'Se perdió en silencio el ajuste del viernes de Luis. Los viernes la página dirá 5:00 y la oficina estará cerrada a las 4:30. Es el error más común: resolver borrando el trabajo del otro.'],
+  [['Accept Current Change: me quedo con mi versión (5:00)', 'Se perdió en silencio el ajuste del viernes de ‹B›. Los viernes la página dirá 5:00 y la oficina estará cerrada a las 4:30. Es el error más común: resolver borrando el trabajo del otro.'],
    ['Accept Incoming Change: me quedo con la otra (4:30)', 'Ahora se perdió tu cambio: el horario general vuelve a ser el viejo. Rara vez uno de los dos cambios sobra por completo.'],
    ['Accept Both: conservo las dos líneas', 'Quedan dos horarios contradictorios, uno debajo de otro. ¿Cuál es el bueno? El usuario no lo sabrá.'],
    ['Combinar: cada cambio tiene una parte correcta', null]].forEach(([t, bad]) => o.append(h('button', { class: 'opt', type: 'button', onclick: (e) => {
@@ -1676,9 +1707,9 @@ W.conflict = function (spec, id) {
     if (/^(<{7}|={7}|>{7})/m.test(v)) { fb.className = 'fb badfb'; fb.innerHTML = 'Todavía quedan marcas de conflicto en el archivo. Busca <code>&lt;&lt;&lt;&lt;&lt;&lt;&lt;</code>: no debe quedar ninguna.'; return; }
     if (!/5:00/.test(v) || !/4:30/.test(v)) { fb.className = 'fb badfb'; fb.innerHTML = 'El archivo ya no tiene marcas, pero falta uno de los dos cambios: tiene que aparecer el horario general (5:00) <b>y</b> el del viernes (4:30).'; return; }
     if (!/Teléfono: 500-0000/.test(v)) { fb.className = 'fb badfb'; fb.innerHTML = 'Se perdió la línea del teléfono, que no tenía conflicto. Déjala como estaba.'; return; }
-    fb.className = 'fb good'; fb.innerHTML = '<b>Conflicto bien resuelto.</b> Nadie perdió trabajo. En el mensaje del commit, Ana anota: <i>Combina horario nuevo con el ajuste del viernes de Luis</i>. Y luego prueba que todo funcione.'; markDone('Conflicto resuelto sin borrar a nadie');
+    fb.className = 'fb good'; fb.innerHTML = '<b>Conflicto bien resuelto.</b> Nadie perdió trabajo. En el mensaje del commit, ‹A› anota: <i>Combina horario nuevo con el ajuste del viernes de ‹B›</i>. Y luego prueba que todo funcione.'; markDone('Conflicto resuelto sin borrar a nadie');
   };
-  box.append(h('p', { html: 'Ana trajo <code>main</code> a su rama con <code>git merge main</code> y apareció esto en <code>contacto.md</code>:' }), view, ctx, h('p', { class: 'qt', style: 'font-weight:600;margin:0' }, '¿Cómo debe quedar?'), o, editor, h('div', { class: 'row' }, finish), fb);
+  box.append(h('p', { html: '‹A› trajo <code>main</code> a su rama con <code>git merge main</code> y apareció esto en <code>contacto.md</code>:' }), view, ctx, h('p', { class: 'qt', style: 'font-weight:600;margin:0' }, '¿Cómo debe quedar?'), o, editor, h('div', { class: 'row' }, finish), fb);
   return box;
 };
 
@@ -1740,8 +1771,8 @@ W.kanban = function (spec, id) {
   const cols = ['Por hacer', 'En progreso', 'En revisión', 'Cerrado'];
   const labels = ['por hacer', 'en progreso', 'en revisión', 'cerrado'];
   const cards = [{ n: 45, t: 'Filtro por fecha', c: 0 }, { n: 42, t: 'Página en blanco al enviar formulario sin fecha', c: 0, star: true }, { n: 40, t: 'Teléfono en pie de página', c: 2 }, { n: 38, t: 'Logo nuevo', c: 3 }];
-  const visited = new Set([0]); const board = h('div', { class: 'kanban' }); const fb = h('div', { class: 'fb info', html: 'Luis se asigna el #42. Muévelo columna por columna y mira cómo cambia su etiqueta.' });
-  const events = ['', 'Luis se lo asigna y empieza. Etiqueta: <b>en progreso</b>.', 'Abrió la Merge Request con <code>Closes #42</code>. Etiqueta: <b>en revisión</b>.', 'Ana aprobó, Luis fusionó y el issue <b>se cerró solo</b> gracias a <code>Closes #42</code>.'];
+  const visited = new Set([0]); const board = h('div', { class: 'kanban' }); const fb = h('div', { class: 'fb info', html: '‹B› se asigna el #42. Muévelo columna por columna y mira cómo cambia su etiqueta.' });
+  const events = ['', '‹B› se lo asigna y empieza. Etiqueta: <b>en progreso</b>.', 'Abrió la Merge Request con <code>Closes #42</code>. Etiqueta: <b>en revisión</b>.', '‹A› aprobó, ‹B› fusionó y el issue <b>se cerró solo</b> gracias a <code>Closes #42</code>.'];
   const draw = () => {
     board.innerHTML = '';
     cols.forEach((c, ci) => {
@@ -1766,7 +1797,7 @@ W.pipeline = function (spec, id) {
   const { box, markDone } = actBox(id, 'Lee el semáforo del pipeline', '●', null, 30);
   const stages = [['construir', ['compilar']], ['probar', ['pruebas', 'estilo']], ['publicar', ['desplegar-pruebas']]];
   let fixed = false, running = false;
-  const pipe = h('div', { class: 'pipe' }); const fb = h('div', { class: 'fb info', html: 'Luis abrió una MR que cambia el formato de fechas del reporte. Ejecuta el pipeline.' });
+  const pipe = h('div', { class: 'pipe' }); const fb = h('div', { class: 'fb info', html: '‹B› abrió una MR que cambia el formato de fechas del reporte. Ejecuta el pipeline.' });
   const log = h('div', { class: 'log', hidden: true }); const choice = h('div', { class: 'opts', hidden: true });
   const jobs = {};
   const draw = st => {
@@ -1779,7 +1810,7 @@ W.pipeline = function (spec, id) {
     const seq = [['compilar', 'passed'], ['pruebas', fixed ? 'passed' : 'failed'], ['estilo', 'passed'], ['desplegar-pruebas', fixed ? 'passed' : 'skipped']];
     let i = 0;
     const tick = () => {
-      if (i >= seq.length) { running = false; if (fixed) { fb.className = 'fb good'; fb.innerHTML = '<b>Verde.</b> Las revisiones automáticas pasaron. Ojo: verde no significa perfecto; Ana todavía revisa la lógica. Máquina y personas se complementan.'; markDone('Pipeline en verde'); } else { fb.className = 'fb badfb'; fb.innerHTML = '<b>Rojo.</b> Un trabajo falló y la etapa <i>publicar</i> quedó <b>skipped</b>. Toca el trabajo con la ✕ para leer su registro.'; } return; }
+      if (i >= seq.length) { running = false; if (fixed) { fb.className = 'fb good'; fb.innerHTML = '<b>Verde.</b> Las revisiones automáticas pasaron. Ojo: verde no significa perfecto; ‹A› todavía revisa la lógica. Máquina y personas se complementan.'; markDone('Pipeline en verde'); } else { fb.className = 'fb badfb'; fb.innerHTML = '<b>Rojo.</b> Un trabajo falló y la etapa <i>publicar</i> quedó <b>skipped</b>. Toca el trabajo con la ✕ para leer su registro.'; } return; }
       const [j, r] = seq[i]; st[j] = 'running'; draw(st);
       setTimeout(() => { st[j] = r; draw(st); i++; tick(); }, r === 'skipped' ? 300 : 650);
     };
@@ -1792,7 +1823,7 @@ W.pipeline = function (spec, id) {
     choice.hidden = false; choice.innerHTML = '';
     [['Fusiono igual, seguro no es nada', 'Nunca se fusiona en rojo. El problema terminaría en producción, en el reporte que usan todos.'], ['Desactivo esa prueba para que pase', 'Borrar o desactivar una prueba esconde el problema en vez de resolverlo.'], ['Le doy Retry diez veces hasta que pase', 'Retry sirve para fallos pasajeros (como la red). Si falla igual, no es pasajero. Esto es un error real.'], ['Relaciono el error con mi cambio, corrijo en mi rama y hago push', null]].forEach(([t, bad]) => choice.append(h('button', { class: 'opt', type: 'button', onclick: e => {
       if (bad) { e.currentTarget.classList.add('wrong'); fb.className = 'fb badfb'; fb.innerHTML = bad; return; }
-      e.currentTarget.classList.add('right'); fixed = true; fb.className = 'fb good'; fb.innerHTML = 'El cambio de formato rompió cómo se agrupaban los meses. Luis lo corrige y hace push: <b>el pipeline se ejecuta solo otra vez</b>.'; setTimeout(run, 900);
+      e.currentTarget.classList.add('right'); fixed = true; fb.className = 'fb good'; fb.innerHTML = 'El cambio de formato rompió cómo se agrupaban los meses. ‹B› lo corrige y hace push: <b>el pipeline se ejecuta solo otra vez</b>.'; setTimeout(run, 900);
     } }, t)));
   }
   draw({});
@@ -1853,10 +1884,10 @@ W.cert = function (spec, id) {
    El proyecto del curso: sitio-oficina
    Un solo repositorio que crece módulo a módulo. Cada misión empieza
    con el proyecto tal como quedó al final de la anterior, más lo que
-   el equipo (Ana y Luis) publicó mientras tanto.
+   el equipo (‹A› y ‹B›) publicó mientras tanto.
    ================================================================ */
 const PROJ = 'sitio-oficina';
-const PROJECT_URL = 'git@gitlab.com:tu-usuario/sitio-oficina.git';
+const PROJECT_URL = 'git@gitlab.com:oficina/sitio-oficina.git';
 
 function seedProject(sim) {
   sim.clonable[PROJECT_URL] = (s, url) => seedRemote(s, url, ctx => {
@@ -1900,8 +1931,8 @@ const ROADMAP = {
   m14: 'Cierras el issue #7 con la página de preguntas frecuentes: el flujo completo.'
 };
 const PROJECT_STAGES = [
-  ['m2', ['git config --global user.name "Tu Nombre"', 'git config --global user.email "tu-correo@ejemplo.com"', 'git clone ' + PROJECT_URL, 'cd ' + PROJ]],
-  ['m3', [s => { const r = s.repos[PROJ]; r.files['README.md'] += 'Hecho por: Tu Nombre\n'; r.files['notas-personales.txt'] = 'No olvidar: preguntar a Ana por el horario\n'; },
+  ['m2', ['git config --global user.name "‹YO›"', 'git config --global user.email "‹MAIL›"', 'git clone ' + PROJECT_URL, 'cd ' + PROJ]],
+  ['m3', [s => { const r = s.repos[PROJ]; r.files['README.md'] += nm('Hecho por: ‹YO›\n'); r.files['notas-personales.txt'] = nm('No olvidar: preguntar a ‹A› por el horario\n'); },
     team('ana', 'Actualiza horario de atención', t => { t['contacto.md'] = t['contacto.md'].replace('8:00 a 4:00', '8:00 a 5:00'); })], 'pre'],
   ['m3', ['echo "notas-personales.txt" > .gitignore', 'git add README.md .gitignore', 'git commit -m "Agrega mi nombre al README e ignora notas personales"', 'git pull', 'git push']],
   ['m4', ['git pull', 'git switch -c feature/seccion-sobre-mi', 'echo "# Sobre mí" > sobre-mi.md', 'git add sobre-mi.md', 'git commit -m "Agrega sección Sobre mí"', 'echo "Me encargo de mantener la página de contacto." >> sobre-mi.md', 'git commit -am "Agrega presentación en Sobre mí"', 'git push -u origin feature/seccion-sobre-mi', 'git switch main']],
@@ -1912,7 +1943,7 @@ const PROJECT_STAGES = [
   ['m7a', ['git restore README.md', 'echo "Correo: info@oficina.com" >> contacto.md', 'git commit -am "Agrega correo de contacto"', 'git push']],
   ['m7b', [team('luis', 'Agrega reporte mensual', t => { t['reporte.md'] = '# Reporte mensual\n\nTotal: 1,240\n'; }), 'git pull', 'git switch -c feature/reporte', 'echo "# Reporte mensual" > reporte.md', 'echo "" >> reporte.md', 'echo "Total: 0 (formato nuevo)" >> reporte.md', 'git commit -am "Cambia formato de totales"', 'git push -u origin feature/reporte'], 'pre'],
   ['m7b', [s => s.run('git revert ' + byMsg(s, 'Cambia formato de totales')), 'git push', 'git restore reporte.md', 'git switch main', 'git branch -D feature/reporte', 'git push origin --delete feature/reporte']],
-  ['m7c', ['echo "Ana: diseño · Luis: reportes · Tú: contacto" > equipo.md', 'git add equipo.md', 'git commit -m "Agrega lista del equipo"'], 'pre'],
+  ['m7c', ['echo "‹A›: diseño · ‹B›: reportes · Tú: contacto" > equipo.md', 'git add equipo.md', 'git commit -m "Agrega lista del equipo"'], 'pre'],
   ['m7c', ['git reset --hard HEAD~1', s => s.run('git switch -c rescate ' + byMsg(s, 'Agrega lista del equipo')), 'git switch main', 'git merge rescate', 'git branch -d rescate', 'git push']],
   ['m12', [team('luis', 'Agrega filtro por fecha en la búsqueda', t => { t['busqueda.md'] = '# Búsqueda\n\nFiltro por fecha: desde / hasta\n'; }),
     team('ana', 'Corrige typo en el README', t => { t['README.md'] = t['README.md'].replace('Página web', 'Sitio web'); }),
@@ -1971,7 +2002,7 @@ const MODULES = [
     ['"Git sirve también para documentación, sitios web y configuraciones."', 1],
     ['"Cada persona tiene una copia completa de toda la historia."', 1]], why: 'Es más difícil perder trabajo con Git que sin él.' },
   { act: 'quiz', qs: [
-    { q: 'Ana cambia el horario y Luis el teléfono, al mismo tiempo, en el mismo archivo pero en líneas distintas. Con Git, ¿qué pasa?', o: ['Git junta los dos cambios porque tocan partes distintas', 'Gana el último que publica', 'Git borra los dos cambios', 'Git elige uno al azar'], a: 0, why: 'Git es muy bueno juntando cambios en partes distintas. Solo pregunta cuando chocan en las mismas líneas.' },
+    { q: '‹A› cambia el horario y ‹B› el teléfono, al mismo tiempo, en el mismo archivo pero en líneas distintas. Con Git, ¿qué pasa?', o: ['Git junta los dos cambios porque tocan partes distintas', 'Gana el último que publica', 'Git borra los dos cambios', 'Git elige uno al azar'], a: 0, why: 'Git es muy bueno juntando cambios en partes distintas. Solo pregunta cuando chocan en las mismas líneas.' },
     { q: '¿Qué cuatro cosas anota Git de cada cambio?', o: ['Qué, quién, cuándo y por qué', 'Solo la fecha', 'El tamaño del archivo y su nombre', 'La contraseña de quien lo hizo'], a: 0, why: 'Qué cambió, quién, cuándo y por qué (con tu mensaje).' }] },
   { act: 'checklist', items: ['Puedo explicar con mis palabras qué es el control de versiones.', 'Entiendo los cuatro problemas de guardar versiones a mano.', 'Sé que Git guarda qué, quién, cuándo y por qué de cada cambio.', 'Sé que un conflicto es cuando dos personas tocan lo mismo, y que Git me pide decidir.'] },
   { tip: `<b>Ejercicio fuera de pantalla:</b> abre una carpeta tuya y busca archivos con nombres como <i>final</i>, <i>v2</i> o <i>copia</i>. Elige uno y responde: ¿cuál es la versión buena? ¿quién cambió qué? Anota cuánto tardaste. Al terminar el curso, compara con lo que Git responde en segundos.` }
@@ -1993,7 +2024,7 @@ const MODULES = [
     ['Push y pull', '<b>Push</b> (empujar): envías tus commits a GitLab. <b>Pull</b> (jalar): traes los de otros a tu computadora.']] },
   { story: `<p><b>La idea que más confunde:</b> guardar un cambio en tu computadora <b>no es lo mismo</b> que publicarlo. Si haces commit pero nunca haces push, tu trabajo existe solo en tu computadora. Si el disco se daña, se pierde. Y tu equipo nunca lo vio. Este malentendido causa muchísimos <i>"pero yo sí lo guardé"</i>.</p>` },
   { act: 'journey' },
-  { text: `<h2>Qué hay dentro de un commit</h2><div class="table"><table><tr><th>Parte</th><th>Ejemplo</th></tr><tr><td>Identificador único</td><td><code>a3f9c21</code></td></tr><tr><td>Autor</td><td>Ana Pérez &lt;ana@ejemplo.com&gt;</td></tr><tr><td>Fecha</td><td>8 de octubre, 10:42 a.m.</td></tr><tr><td>Mensaje</td><td>Corrige teléfono de contacto</td></tr><tr><td>Commit anterior</td><td><code>7b2e104</code></td></tr></table></div><p>Ese último punto es la clave: <b>cada commit apunta al anterior</b>, como los eslabones de una cadena. Por eso Git puede reconstruir el proyecto en cualquier momento, y por eso un commit no se puede "editar en secreto": si cambias uno viejo, cambian todos los identificadores que vienen después.</p>` },
+  { text: `<h2>Qué hay dentro de un commit</h2><div class="table"><table><tr><th>Parte</th><th>Ejemplo</th></tr><tr><td>Identificador único</td><td><code>a3f9c21</code></td></tr><tr><td>Autor</td><td>‹A› &lt;ana@ejemplo.com&gt;</td></tr><tr><td>Fecha</td><td>8 de octubre, 10:42 a.m.</td></tr><tr><td>Mensaje</td><td>Corrige teléfono de contacto</td></tr><tr><td>Commit anterior</td><td><code>7b2e104</code></td></tr></table></div><p>Ese último punto es la clave: <b>cada commit apunta al anterior</b>, como los eslabones de una cadena. Por eso Git puede reconstruir el proyecto en cualquier momento, y por eso un commit no se puede "editar en secreto": si cambias uno viejo, cambian todos los identificadores que vienen después.</p>` },
   { act: 'quiz', qs: [
     { q: 'Hiciste tres commits esta mañana pero ningún push. Tu compañero dice que no ve nada en GitLab. ¿Por qué?', o: ['Porque los commits viven solo en tu computadora hasta que haces push', 'Porque GitLab tarda un día en mostrarlos', 'Porque tu compañero no tiene permisos', 'Porque los commits se borran al apagar la computadora'], a: 0, why: 'Commit guarda en tu cuaderno; push lo lleva a la biblioteca.' },
     { q: 'Vas a crear un proyecto nuevo del trabajo y no sabes qué visibilidad elegir. ¿Qué conviene?', o: ['Privado: siempre puedes abrirlo después', 'Público: así cualquiera ayuda', 'Interno, sin pensarlo', 'Da igual'], a: 0, why: 'Ante la duda, empieza en privado. Lo contrario es más delicado: lo que estuvo público pudo haber sido copiado.' },
@@ -2005,8 +2036,8 @@ const MODULES = [
 { id: 'm2', n: 2, title: 'Prepara tu computadora', short: 'Instalar, configurar y clonar', time: '25 min', goal: 'Tener Git listo y tu primer proyecto descargado',
   blocks: [
   { text: `<h2>La terminal no muerde</h2><p>La terminal es una ventana donde escribes órdenes y la computadora las ejecuta. Tres reglas para no asustarte:</p><ol><li>Escribes la orden y pulsas <b>Enter</b>.</li><li>Si no aparece ningún mensaje, casi siempre significa que <b>todo salió bien</b>.</li><li>Si te equivocas al escribir, no pasa nada: sale un error y vuelves a intentar.</li></ol><div class="table"><table><tr><th>Sistema</th><th>Cómo abrirla</th></tr><tr><td>Windows</td><td>Instala Git desde git-scm.com y abre <b>Git Bash</b></td></tr><tr><td>Mac</td><td>Cmd + Espacio, escribe <b>Terminal</b></td></tr><tr><td>Linux</td><td>Ctrl + Alt + T</td></tr></table></div>` },
-  { text: `<h2>Dile a Git quién eres</h2><p>Cada commit llevará tu nombre y correo. Se configura <b>una sola vez</b>:</p><pre class="cmd">git config --global user.name "Tu Nombre Apellido"
-git config --global user.email "tu-correo@ejemplo.com"</pre><p><code>--global</code> significa "para todos mis proyectos en esta computadora". Usa <b>el mismo correo que en GitLab</b>: así GitLab conecta tus commits con tu perfil.</p>` },
+  { text: `<h2>Dile a Git quién eres</h2><p>Cada commit llevará tu nombre y correo. Se configura <b>una sola vez</b>:</p><pre class="cmd">git config --global user.name "‹YO› Apellido"
+git config --global user.email "‹MAIL›"</pre><p><code>--global</code> significa "para todos mis proyectos en esta computadora". Usa <b>el mismo correo que en GitLab</b>: así GitLab conecta tus commits con tu perfil.</p>` },
   { analogy: `<h3>SSH: el candado y la llave</h3><p>Le das el <b>candado</b> (llave pública, el archivo que termina en <code>.pub</code>) a GitLab. La <b>llave privada</b> se queda en tu computadora y <b>nunca</b> la compartes. Cuando te conectas, GitLab comprueba que tu llave abre su candado.</p>` },
   { act: 'quiz', qs: [
     { q: 'Tienes dos archivos: <code>id_ed25519</code> e <code>id_ed25519.pub</code>. ¿Cuál pegas en GitLab?', o: ['<code>id_ed25519.pub</code>, la pública', '<code>id_ed25519</code>, la privada', 'Los dos', 'Ninguno, se manda por correo'], a: 0, why: 'El que termina en .pub se puede compartir. El otro nunca sale de tu computadora: ni por correo, ni por chat, ni dentro de un repositorio.', fb: { 1: '¡Cuidado! La privada es tu llave de la casa. Nunca se comparte.', 2: 'La privada nunca se comparte.' } },
@@ -2014,13 +2045,13 @@ git config --global user.email "tu-correo@ejemplo.com"</pre><p><code>--global</c
     { q: 'Tus commits aparecen en GitLab sin tu foto y con un nombre raro. ¿Lo más probable?', o: ['El correo configurado en Git no coincide con el de tu cuenta de GitLab', 'GitLab está caído', 'Hiciste demasiados commits', 'Te falta instalar Git otra vez'], a: 0, why: 'Revísalo con <code>git config user.email</code> y corrígelo. Los commits nuevos saldrán bien.' }] },
   { text: `<h2>Clonar o empezar de cero</h2><div class="table"><table><tr><th></th><th>git clone</th><th>git init</th></tr><tr><td>Qué hace</td><td>Descarga un proyecto que ya existe en GitLab</td><td>Convierte una carpeta tuya en repositorio nuevo</td></tr><tr><td>¿Trae historia?</td><td>Sí, toda</td><td>No, empieza vacío</td></tr><tr><td>¿Conectado a GitLab?</td><td>Sí</td><td>No, hay que conectarlo</td></tr><tr><td>Cuándo</td><td>Casi siempre, al unirte a un proyecto</td><td>Cuando empiezas algo desde tu computadora</td></tr></table></div><p>Al clonar, Git le pone a la copia de GitLab el apodo <b><code>origin</code></b>. Lo verás en comandos como <code>git push -u origin mi-rama</code>: significa "envía a GitLab".</p><p><code>cd</code> significa "cambiar de directorio": es como hacer doble clic en una carpeta. <code>cd ..</code> te devuelve atrás y <code>ls</code> muestra lo que hay.</p>` },
   { act: 'term', title: 'Misión: deja tu computadora lista', xp: 50,
-    intro: 'Aquí empieza <b>tu proyecto del curso</b>: <code>sitio-oficina</code>, la página web de la oficina que mantienes con Ana y Luis. Lo vas a descargar ahora y lo harás crecer en cada módulo. La terminal es un simulador seguro; a la derecha ves en vivo lo que pasa en tu computadora y en GitLab.',
+    intro: 'Aquí empieza <b>tu proyecto del curso</b>: <code>sitio-oficina</code>, la página web de la oficina que mantienes con ‹A› y ‹B›. Lo vas a descargar ahora y lo harás crecer en cada módulo. La terminal es un simulador seguro; a la derecha ves en vivo lo que pasa en tu computadora y en GitLab.',
     setup: s => buildProject(s, 'm2'), project: true,
     quick: ['git --version', 'git config --global --list', 'ls', 'help'],
     goals: [
       { t: 'Comprueba que Git está instalado', hint: 'git --version', check: ran(/^git --version$/) },
-      { t: 'Configura tu nombre', hint: 'git config --global user.name "Tu Nombre"', check: s => !!s.user.name },
-      { t: 'Configura tu correo (el mismo de GitLab)', hint: 'git config --global user.email "tu-correo@ejemplo.com"', check: s => /@/.test(s.user.email) },
+      { t: 'Configura tu nombre', hint: 'git config --global user.name "‹YO›"', check: s => !!s.user.name },
+      { t: 'Configura tu correo (el mismo de GitLab)', hint: 'git config --global user.email "‹MAIL›"', check: s => /@/.test(s.user.email) },
       { t: 'Revisa lo que configuraste', hint: 'git config --global --list', check: ran(/^git config( --global)? (--list|-l)$/) },
       { t: 'Prueba tu conexión SSH con GitLab', hint: 'ssh -T git@gitlab.com', check: ran(/^ssh -T git@gitlab\.com$/) },
       { t: 'Clona el proyecto <code>sitio-oficina</code>', hint: 'git clone ' + PROJECT_URL, check: s => !!s.repos[PROJ], why: 'La dirección la copias del botón azul <b>Code</b> en GitLab.' },
@@ -2049,7 +2080,7 @@ git push                   <span class="c">#    ...y publico</span></pre><p><b>S
   { text: `<h2>.gitignore: lo que nunca debe entrar</h2><p>Un archivo de texto en la raíz del proyecto con la lista de lo que Git debe ignorar: contraseñas (<code>.env</code>), archivos del sistema (<code>.DS_Store</code>), carpetas que se generan solas (<code>node_modules/</code>) o tus notas personales. Lo que está ahí deja de salir en <code>git status</code>, así no lo agregas por accidente.</p><p class="muted" style="margin:0"><b>Ojo:</b> solo funciona con archivos que todavía no se guardaron. Si ya entró en un commit, agregarlo después no lo borra del historial.</p>` },
   { act: 'commitJudge' },
   { act: 'term', title: 'Misión: tu primer ciclo completo', xp: 60,
-    intro: 'Seguimos con <code>sitio-oficina</code>. Ya agregaste tu nombre al README y creaste <code>notas-personales.txt</code> con apuntes tuyos. Mientras tanto, Ana publicó un cambio en GitLab (todavía no lo sabes).',
+    intro: 'Seguimos con <code>sitio-oficina</code>. Ya agregaste tu nombre al README y creaste <code>notas-personales.txt</code> con apuntes tuyos. Mientras tanto, ‹A› publicó un cambio en GitLab (todavía no lo sabes).',
     setup: s => buildProject(s, 'm3'), project: true,
     quick: ['git status', 'git diff', 'git diff --staged', 'git log --oneline', 'cat .gitignore'],
     goals: [
@@ -2064,7 +2095,7 @@ git push                   <span class="c">#    ...y publico</span></pre><p><b>S
       { t: 'Intenta publicar con <code>git push</code>', hint: 'git push', check: (s, r) => !!r.rejected || (!!r.pushed && !r.err) },
       { t: 'Te lo rechazaron: alguien publicó antes. Trae lo nuevo', hint: 'git pull', check: (s, r) => !!r.pulled && !r.err },
       { t: 'Ahora sí, publica', hint: 'git push', check: s => { const r = rp(s); return s.remoteOf(r).branches.main === r.branches.main; } }],
-    outro: 'Fíjate en el mapa: el commit de Ana y el tuyo se juntaron. Por eso se dice <b>pull antes de push</b>.' },
+    outro: 'Fíjate en el mapa: el commit de ‹A› y el tuyo se juntaron. Por eso se dice <b>pull antes de push</b>.' },
   { act: 'sort', title: 'Lo que ves y qué hacer', buckets: ['git add primero', 'git pull', 'git push', 'Nada: todo está guardado'], items: [
     ['<code>nothing added to commit</code>', 0], ['<code>rejected ... (fetch first)</code> al hacer push', 1], ["<code>Your branch is ahead of 'origin/main' by 2 commits</code>", 2], ["<code>Your branch is behind 'origin/main'</code>", 1], ['<code>nothing to commit, working tree clean</code>', 3]] },
   { act: 'quiz', qs: [
@@ -2101,7 +2132,7 @@ git branch -d feature/formulario     <span class="c"># bórrala cuando ya se fus
       { t: 'Mira las ramas dibujadas', hint: 'git log --oneline --graph --all', check: ran(/^git log.*--graph/) }],
     outro: 'El archivo "desaparece" en main porque sigue guardado en la otra rama. Nada se perdió. En el próximo módulo pedirás que revisen esta rama con una Merge Request.' },
   { act: 'branchNames' },
-  { act: 'order', title: 'Un error urgente en medio de tu trabajo', intro: 'Ana está a mitad del rediseño en <code>feature/formulario-contacto</code> y le piden corregir el teléfono hoy. Ordena lo que hace:', steps: [
+  { act: 'order', title: 'Un error urgente en medio de tu trabajo', intro: '‹A› está a mitad del rediseño en <code>feature/formulario-contacto</code> y le piden corregir el teléfono hoy. Ordena lo que hace:', steps: [
     'Hace commit de lo que lleva en su rama: <code>Avance: estructura del nuevo formulario</code>',
     'Vuelve a main y la actualiza: <code>git switch main</code> y <code>git pull</code>',
     'Crea la rama de la corrección: <code>git switch -c fix/telefono-pie-de-pagina</code>',
@@ -2149,7 +2180,7 @@ Closes #42
 { id: 'm6', n: 6, title: 'Conflictos: no borres el trabajo del otro', short: 'Git te pide ayuda, no es un error', time: '35 min', goal: 'Resolver conflictos entendiendo los dos lados',
   blocks: [
   { story: `<p><b>El conflicto gigante:</b> imagina que dejas tu rama separada de main <b>durante semanas</b>. Mientras tanto, main sigue cambiando. Cuando por fin quieres juntarlas, Git marca conflictos en archivo tras archivo. Cada uno es sencillo; el problema es la cantidad, y que ya no recuerdas por qué hiciste cada cambio. <b>Un conflicto pequeño hoy se resuelve en cinco minutos. Veinte acumulados te pueden costar un día entero.</b></p><p>Y el error más común: aparece el conflicto, la persona se asusta y se queda con su versión sin leer la otra. El conflicto desaparece de la pantalla... y el trabajo de un compañero se pierde en silencio.</p>` },
-  { text: `<h2>Por qué aparecen</h2><p>Git junta solo los cambios en partes distintas. El conflicto aparece únicamente cuando <b>dos decisiones humanas chocan</b>:</p><ul><li>Dos personas cambian <b>las mismas líneas</b> (Ana pone 5:00 y Luis 4:30).</li><li>Una persona <b>borra</b> un archivo y otra lo <b>modifica</b>.</li><li>Dos personas crean un archivo con el <b>mismo nombre</b>.</li></ul><h3>Cómo se lee</h3><pre class="cmd">&lt;&lt;&lt;&lt;&lt;&lt;&lt; HEAD                      <span class="c">← empieza TU versión (la rama donde estás)</span>
+  { text: `<h2>Por qué aparecen</h2><p>Git junta solo los cambios en partes distintas. El conflicto aparece únicamente cuando <b>dos decisiones humanas chocan</b>:</p><ul><li>Dos personas cambian <b>las mismas líneas</b> (‹A› pone 5:00 y ‹B› 4:30).</li><li>Una persona <b>borra</b> un archivo y otra lo <b>modifica</b>.</li><li>Dos personas crean un archivo con el <b>mismo nombre</b>.</li></ul><h3>Cómo se lee</h3><pre class="cmd">&lt;&lt;&lt;&lt;&lt;&lt;&lt; HEAD                      <span class="c">← empieza TU versión (la rama donde estás)</span>
 Horario: lunes a viernes, 8:00 a 5:00
 =======                           <span class="c">← separa las dos versiones</span>
 Horario: lunes a viernes, 8:00 a 4:30
@@ -2198,7 +2229,7 @@ Horario: lunes a viernes, 8:00 a 4:30
       { t: 'Rehazlo con un buen mensaje', hint: 'git commit -m "Agrega correo de contacto"', check: (s, r) => !!r.commit && goodMsg(r.msg) }],
     outro: 'Restore para archivos, reset para commits locales. Y nadie se enteró del mensaje feo.' },
   { act: 'term', title: 'Misión 2: revert y stash', xp: 50,
-    intro: 'Luis agregó a <code>sitio-oficina</code> un reporte mensual. Esta mañana publicaste en tu rama <code>feature/reporte</code> el commit <i>Cambia formato de totales</i>, y rompió el cálculo. Además te van a interrumpir con una urgencia.',
+    intro: '‹B› agregó a <code>sitio-oficina</code> un reporte mensual. Esta mañana publicaste en tu rama <code>feature/reporte</code> el commit <i>Cambia formato de totales</i>, y rompió el cálculo. Además te van a interrumpir con una urgencia.',
     setup: s => buildProject(s, 'm7b'), project: true,
     quick: ['git status', 'git log --oneline', 'git stash list', 'cat reporte.md'],
     goals: [
@@ -2230,7 +2261,7 @@ Horario: lunes a viernes, 8:00 a 4:30
 /* ------------------------------------------------------------ 8 */
 { id: 'm8', n: 8, title: 'Organiza el trabajo en GitLab', short: 'Issues, etiquetas, milestones y tableros', time: '25 min', goal: 'Conectar la tarea con el código que la resolvió',
   blocks: [
-  { story: `<p>Sin un lugar central, las tareas viven en mensajes sueltos: <i>"¿alguien vio lo del formulario?"</i>, <i>"creo que Luis lo iba a hacer"</i>, <i>"¿eso ya se arregló?"</i>. Con GitLab, cada tarea tiene una ficha, un responsable y un estado. Y cada cambio en el código se enlaza con la tarea que lo pidió.</p>` },
+  { story: `<p>Sin un lugar central, las tareas viven en mensajes sueltos: <i>"¿alguien vio lo del formulario?"</i>, <i>"creo que ‹B› lo iba a hacer"</i>, <i>"¿eso ya se arregló?"</i>. Con GitLab, cada tarea tiene una ficha, un responsable y un estado. Y cada cambio en el código se enlaza con la tarea que lo pidió.</p>` },
   { act: 'flips', title: 'Las herramientas de organización', cards: [
     ['Issue', 'Una ficha de trabajo con número propio (#42): un error, una función nueva, una duda. Un buen issue lo puede tomar otra persona sin preguntarte nada.'],
     ['Etiquetas (labels)', 'Marcas de colores para clasificar: tipo, prioridad, estado, área. Pocas y claras, acordadas en equipo.'],
@@ -2293,13 +2324,13 @@ Closes #42                                          <span class="c"># en la desc
 /* ------------------------------------------------------------ 12 */
 { id: 'm12', n: 12, title: 'Investigar el historial: Git como detective', short: 'log, blame, diff y cómo se juntan las ramas', time: '35 min', goal: 'Responder "¿qué cambió?" en minutos',
   blocks: [
-  { text: `<h2>Preguntas y comandos</h2><div class="table"><table><tr><th>Pregunta</th><th>Comando</th></tr><tr><td>¿Qué hizo Ana?</td><td><code>git log --oneline --author="Ana"</code></td></tr><tr><td>¿Qué cambió esta semana?</td><td><code>git log --oneline --since="1 week ago"</code></td></tr><tr><td>¿Qué commits tocaron este archivo?</td><td><code>git log --oneline -- contacto.md</code></td></tr><tr><td>¿Qué commits mencionan "horario"?</td><td><code>git log --oneline --grep="horario"</code></td></tr><tr><td>¿Qué commit agregó o quitó este texto?</td><td><code>git log --oneline -S "500-0000"</code></td></tr><tr><td>¿Quién escribió cada línea?</td><td><code>git blame contacto.md</code></td></tr><tr><td>¿Cómo era el archivo antes?</td><td><code>git show a3f9c21:contacto.md</code></td></tr></table></div><p><b>Sobre blame:</b> significa "culpar", pero no lo uses para buscar culpables. Úsalo para saber <b>a quién preguntar</b>.</p>` },
+  { text: `<h2>Preguntas y comandos</h2><div class="table"><table><tr><th>Pregunta</th><th>Comando</th></tr><tr><td>¿Qué hizo ‹A›?</td><td><code>git log --oneline --author="‹A›"</code></td></tr><tr><td>¿Qué cambió esta semana?</td><td><code>git log --oneline --since="1 week ago"</code></td></tr><tr><td>¿Qué commits tocaron este archivo?</td><td><code>git log --oneline -- contacto.md</code></td></tr><tr><td>¿Qué commits mencionan "horario"?</td><td><code>git log --oneline --grep="horario"</code></td></tr><tr><td>¿Qué commit agregó o quitó este texto?</td><td><code>git log --oneline -S "500-0000"</code></td></tr><tr><td>¿Quién escribió cada línea?</td><td><code>git blame contacto.md</code></td></tr><tr><td>¿Cómo era el archivo antes?</td><td><code>git show a3f9c21:contacto.md</code></td></tr></table></div><p><b>Sobre blame:</b> significa "culpar", pero no lo uses para buscar culpables. Úsalo para saber <b>a quién preguntar</b>.</p>` },
   { act: 'term', title: 'Misión: el teléfono que cambió solo', xp: 60,
     intro: 'Mientras aprendías a organizarte, el equipo siguió trabajando en <code>sitio-oficina</code> y ya trajiste sus cambios con <code>git pull</code>. Ahora un usuario reporta que el teléfono de la página está mal: debería ser <b>500-0000</b>. Nadie recuerda haberlo cambiado. Investiga.',
     setup: s => buildProject(s, 'm12'), project: true,
     quick: ['git log --oneline', 'cat contacto.md', 'git blame contacto.md'],
     goals: [
-      { t: 'Lista solo los commits de Ana', hint: 'git log --oneline --author="Ana"', check: (s, r, c) => /--author/.test(c) && !r.err },
+      { t: 'Lista solo los commits de ‹A›', hint: 'git log --oneline --author="‹A›"', check: (s, r, c) => /--author/.test(c) && !r.err },
       { t: 'Busca los commits que mencionan "horario"', hint: 'git log --oneline --grep="horario"', check: (s, r, c) => /--grep/.test(c) && !r.err },
       { t: 'Encuentra dónde apareció o desapareció <code>500-0000</code>', hint: 'git log --oneline -S "500-0000"', check: (s, r, c) => /-S/.test(c) && (r.list || []).length >= 2 },
       { t: 'Abre el commit sospechoso para ver qué cambió', hint: 'git show CODIGO', why: 'Usa el código de <i>Actualiza pie de página</i>.', check: (s, r) => !!r.shown && s.commits[r.shown].msg === 'Actualiza pie de página' },
@@ -2360,16 +2391,16 @@ rama:         C --- D ----/</pre><p>Si main sí cambió, Git crea un commit espe
     setup: s => buildProject(s, 'm14'), project: true,
     quick: ['git status', 'git log --oneline -5', 'cat faq.md', 'git branch -a'],
     actions: [
-      { label: '👀 Ana revisa la MR', run: s => { const r = s.repos[PROJ]; const R = r && s.remoteOf(r); const b = R && Object.keys(R.branches).find(x => x !== 'main'); if (!b) return { msg: 'Todavía no hay ninguna rama publicada para revisar. Haz push de tu rama primero.' }; return { ok: true, msg: '<b>Ana comentó (bloqueante):</b> «Falta una pregunta sobre el horario de trabajo. Las personas nuevas siempre lo preguntan.» Corrige en tu rama y haz push: la MR se actualiza sola.' }; }, flag: 'reviewed' },
-      { label: '✅ Fusionar en GitLab', run: s => { const r = s.repos[PROJ]; const R = r && s.remoteOf(r); const b = R && Object.keys(R.branches).find(x => x !== 'main'); if (!b) return { msg: 'No hay ninguna MR que fusionar todavía.' }; const t = s.tree(R.branches[b]); if (!/horario/i.test(t['faq.md'] || '')) return { msg: '<b>No se puede fusionar:</b> el hilo de Ana sigue sin resolver (en GitLab todavía falta la pregunta del horario).' }; const id = s.mkCommit(r, { msg: "Merge branch '" + b + "' into 'main'", tree: t, parents: [R.branches.main, R.branches[b]], author: AUTHORS.ana, lane: 'main' }); R.branches.main = id; delete R.branches[b]; return { ok: true, msg: '🟢 Pipeline <b>passed</b> · Ana aprobó · <b>Merged</b>. GitLab cerró el issue #7 (por el <code>Closes #7</code>) y borró la rama remota. Ahora pon tu computadora al día.' }; }, flag: 'merged' }],
+      { label: '👀 ‹A› revisa la MR', run: s => { const r = s.repos[PROJ]; const R = r && s.remoteOf(r); const b = R && Object.keys(R.branches).find(x => x !== 'main'); if (!b) return { msg: 'Todavía no hay ninguna rama publicada para revisar. Haz push de tu rama primero.' }; return { ok: true, msg: '<b>‹A› comentó (bloqueante):</b> «Falta una pregunta sobre el horario de trabajo. Las personas nuevas siempre lo preguntan.» Corrige en tu rama y haz push: la MR se actualiza sola.' }; }, flag: 'reviewed' },
+      { label: '✅ Fusionar en GitLab', run: s => { const r = s.repos[PROJ]; const R = r && s.remoteOf(r); const b = R && Object.keys(R.branches).find(x => x !== 'main'); if (!b) return { msg: 'No hay ninguna MR que fusionar todavía.' }; const t = s.tree(R.branches[b]); if (!/horario/i.test(t['faq.md'] || '')) return { msg: '<b>No se puede fusionar:</b> el hilo de ‹A› sigue sin resolver (en GitLab todavía falta la pregunta del horario).' }; const id = s.mkCommit(r, { msg: "Merge branch '" + b + "' into 'main'", tree: t, parents: [R.branches.main, R.branches[b]], author: AUTHORS.ana, lane: 'main' }); R.branches.main = id; delete R.branches[b]; return { ok: true, msg: '🟢 Pipeline <b>passed</b> · ‹A› aprobó · <b>Merged</b>. GitLab cerró el issue #7 (por el <code>Closes #7</code>) y borró la rama remota. Ahora pon tu computadora al día.' }; }, flag: 'merged' }],
     goals: [
       { t: 'Empieza el día trayendo lo último del equipo', hint: 'git pull', check: (s, r) => !!r.pulled && !r.err },
       { t: 'Repasa cómo ha crecido tu proyecto', hint: 'git log --oneline -5', check: ran(/^git log/) },
       { t: 'Crea la rama para el issue #7 (tipo docs, con el número)', hint: 'git switch -c docs/7-preguntas-frecuentes', check: s => { const r = rp(s); return r && /^docs\/7-[a-z0-9-]+$/.test(r.head); } },
-      { t: 'Crea <code>faq.md</code> con un título y una pregunta', hint: 'echo "# Preguntas frecuentes" > faq.md', why: 'Y luego: <code>echo "¿Dónde pido acceso a GitLab? Con Ana." &gt;&gt; faq.md</code>', check: s => (rp(s).files['faq.md'] || '').split('\n').filter(Boolean).length >= 2 },
+      { t: 'Crea <code>faq.md</code> con un título y una pregunta', hint: 'echo "# Preguntas frecuentes" > faq.md', why: 'Y luego: <code>echo "¿Dónde pido acceso a GitLab? Con ‹A›." &gt;&gt; faq.md</code>', check: s => (rp(s).files['faq.md'] || '').split('\n').filter(Boolean).length >= 2 },
       { t: 'Revisa y haz commit mencionando el issue <code>(#7)</code>', hint: 'git add faq.md', why: 'Luego <code>git commit -m "Agrega preguntas frecuentes (#7)"</code>. Antes, mira con <code>git status</code> y <code>git diff --staged</code>.', check: s => { const r = rp(s); const id = r.branches[r.head]; return /#7/.test(s.commits[id].msg) && s.tree(id)['faq.md'] !== undefined; } },
       { t: 'Publica tu rama (se abre la MR con <code>Closes #7</code>)', hint: 'git push -u origin docs/7-preguntas-frecuentes', check: s => { const r = rp(s); const R = s.remoteOf(r); return r.head !== 'main' && R.branches[r.head] === r.branches[r.head]; } },
-      { t: 'Pide la revisión: pulsa <b>👀 Ana revisa la MR</b>', check: (s, r) => r.action === 'reviewed' },
+      { t: 'Pide la revisión: pulsa <b>👀 ‹A› revisa la MR</b>', check: (s, r) => r.action === 'reviewed' },
       { t: 'Agrega la pregunta del horario y haz commit', hint: 'echo "¿Cuál es el horario? De 8:00 a 5:00." >> faq.md', why: 'Luego <code>git commit -am "Agrega pregunta sobre el horario (#7)"</code>.', check: s => { const r = rp(s); return /horario/i.test(s.tree(r.branches[r.head])['faq.md'] || ''); } },
       { t: 'Actualiza la MR con un push a la misma rama', hint: 'git push', check: s => { const r = rp(s); const R = s.remoteOf(r); return R.branches[r.head] && /horario/i.test(s.tree(R.branches[r.head])['faq.md'] || ''); } },
       { t: 'Pulsa <b>✅ Fusionar en GitLab</b>', check: (s, r) => r.action === 'merged' },
@@ -2381,7 +2412,7 @@ rama:         C --- D ----/</pre><p>Si main sí cambió, Git crea un commit espe
   { act: 'quiz', title: 'Evaluación final', qs: [
     { q: 'Te piden un cambio en un proyecto compartido. ¿Cuál es el primer paso correcto?', o: ['git switch main, git pull y crear una rama para la tarea', 'Editar directo en main y hacer push', 'Descargar un ZIP del proyecto', 'Abrir una MR vacía'], a: 0, why: 'Siempre partes de main actualizada y en tu propia rama.' },
     { q: 'Hiciste push de un commit que rompió algo en una rama compartida. ¿Qué usas?', o: ['git revert', 'git reset --hard + push --force', 'git restore', 'Borras la rama'], a: 0, why: 'Lo publicado se corrige con un commit nuevo.' },
-    { q: 'Aparece un conflicto en un archivo que tocaron tú y Luis. ¿Qué haces primero?', o: ['Leo los dos cambios, entiendo qué buscaba cada uno y pregunto si dudo', 'Acepto mi versión', 'Acepto la de Luis', 'Borro el archivo'], a: 0, why: 'Nunca resuelvas borrando el trabajo del otro.' },
+    { q: 'Aparece un conflicto en un archivo que tocaron tú y ‹B›. ¿Qué haces primero?', o: ['Leo los dos cambios, entiendo qué buscaba cada uno y pregunto si dudo', 'Acepto mi versión', 'Acepto la de ‹B›', 'Borro el archivo'], a: 0, why: 'Nunca resuelvas borrando el trabajo del otro.' },
     { q: 'El pipeline de tu MR está en rojo. ¿Qué haces?', o: ['Leo el registro desde el final, relaciono con mi cambio y corrijo en mi rama', 'Fusiono igual', 'Desactivo la prueba', 'Retry diez veces'], a: 0, why: 'Rojo es información, no un regaño.' },
     { q: '¿Qué es lo único que realmente te protege si subiste un token?', o: ['Revocarlo de inmediato', 'Borrarlo con un commit', 'Hacer el repo privado', 'Cambiar el nombre del archivo'], a: 0, why: 'Aunque lo borres, sigue en la historia.' }] },
   { text: `<h2>Preguntas para reflexionar</h2><ul><li>¿Qué paso del flujo te costó más y por qué?</li><li>¿Qué harías distinto si la MR tuviera 50 archivos en lugar de uno?</li><li>Si mañana te unes a un equipo nuevo, ¿qué tres acuerdos propondrías (nombres de ramas, mensajes, revisión)?</li><li>Vuelve a la hoja del módulo 0, la de la carpeta caótica. ¿Qué podrías responder ahora en segundos?</li></ul>` },
@@ -2397,13 +2428,13 @@ MODULES.forEach(m => m.blocks.forEach((b, i) => { if (b.act && b.act !== 'cert')
 const GLOSSARY = [['Approve (aprobar)', 'Dar el visto bueno a una Merge Request después de revisarla', 5], ['Área de preparación (staging)', 'La "caja" donde pones lo que va a entrar en el próximo commit', 3], ['Blame', 'Vista que muestra quién cambió por última vez cada línea de un archivo', 12], ['Branch (rama)', 'Línea de trabajo paralela para hacer cambios sin tocar la principal', 4], ['CI/CD', 'Revisiones y tareas automáticas que se ejecutan con cada cambio', 9], ['Clonar (clone)', 'Descargar un proyecto de GitLab a tu computadora, con toda su historia', 2], ['Commit', 'Punto de guardado del proyecto, con un mensaje que explica el cambio', 3], ['Conflicto', 'Cuando dos cambios tocan la misma parte y Git te pide decidir', 6], ['Diff', 'La lista de diferencias entre dos versiones, línea por línea', 3], ['Draft (borrador)', 'Merge Request que todavía no está lista para fusionarse', 5], ['.env', 'Archivo local con configuración y secretos, que nunca se sube', 10], ['Etiqueta (label)', 'Marca de color para clasificar issues y Merge Requests', 8], ['Etiqueta de versión (tag)', 'Nombre fijo para un commit importante, como v1.0.0', 13], ['Fast-forward', 'Fusión en la que solo se avanza la rama, sin commit nuevo', 12], ['Fetch', 'Traer la información nueva de GitLab sin juntarla con tu trabajo', 12], ['Fork', 'Copia de un proyecto ajeno en tu cuenta, para proponer cambios', 13], ['Git', 'Programa que guarda la historia de los cambios de un proyecto', 1], ['.gitignore', 'Archivo con la lista de lo que Git debe ignorar', 3], ['GitHub / GitLab', 'Plataformas web para compartir, revisar y organizar repositorios', 1], ['HEAD', 'El commit en el que estás parada o parado ahora mismo', 7], ['Historial', 'La lista de todos los commits del proyecto', 1], ['Issue', 'Ficha de una tarea, error o pedido, con número propio', 8], ['Job (trabajo)', 'Una tarea concreta dentro de un pipeline', 9], ['main', 'Nombre habitual de la rama principal', 4], ['Maintainer', 'Rol de GitLab que puede fusionar en ramas protegidas', 10], ['Markdown', 'Formato de texto sencillo con símbolos para títulos, listas y enlaces', 13], ['Merge (fusionar)', 'Juntar los cambios de una rama con otra', 4], ['Merge Request (MR)', 'Solicitud para revisar y fusionar una rama. En GitHub: Pull Request', 5], ['Milestone', 'Objetivo con fecha que agrupa issues y Merge Requests', 8], ['origin', 'Apodo de la copia del proyecto en GitLab', 2], ['Pipeline', 'La secuencia de revisiones automáticas de un cambio', 9], ['Pull', 'Traer cambios de GitLab y juntarlos con tu rama', 3], ['Push', 'Enviar tus commits a GitLab', 3], ['Rama protegida', 'Rama con reglas sobre quién puede cambiarla y cómo', 10], ['README', 'Archivo de presentación del proyecto', 13], ['Rebase', 'Reescribir tus commits sobre la versión más nueva de otra rama', 12], ['Reflog', 'Registro de todos tus movimientos, para recuperar commits', 7], ['Release', 'Versión publicada con título y notas', 13], ['Remoto', 'La copia del repositorio en GitLab', 1], ['Repositorio (repo)', 'Carpeta del proyecto con toda su historia', 1], ['Reset', 'Mover tu rama hacia atrás, deshaciendo commits locales', 7], ['Restore', 'Devolver archivos a una versión guardada', 7], ['Revert', 'Commit nuevo que anula un commit anterior', 7], ['Runner', 'Máquina que ejecuta los trabajos de un pipeline', 9], ['Secreto', 'Contraseña, token o llave que da acceso a algo', 10], ['Squash', 'Juntar varios commits en uno solo al fusionar', 12], ['SSH', 'Forma segura de conectarte a GitLab con un par de llaves', 2], ['Stash', 'Cajón temporal para apartar cambios a medias', 7], ['Tablero (board)', 'Vista de issues como tarjetas en columnas', 8], ['Terminal', 'Ventana para darle órdenes a la computadora escribiendo', 2], ['Token', 'Clave especial con permisos limitados, que reemplaza tu contraseña', 2], ['upstream', 'Apodo del proyecto original cuando trabajas con un fork', 13], ['Wiki', 'Espacio de documentación dentro del proyecto', 8]];
 
 const CHEATSHEET = [
-  ['Configuración (una sola vez)', 'git config --global user.name "Tu Nombre"\ngit config --global user.email "tu-correo@ejemplo.com"\ngit config --global init.defaultBranch main'],
+  ['Configuración (una sola vez)', 'git config --global user.name "‹YO›"\ngit config --global user.email "‹MAIL›"\ngit config --global init.defaultBranch main'],
   ['Empezar un proyecto', 'git clone git@gitlab.com:usuario/proyecto.git\ncd proyecto'],
   ['El ciclo de todos los días', 'git status\ngit diff\ngit add archivo\ngit diff --staged\ngit commit -m "Agrega ..."\ngit pull\ngit push'],
   ['Ramas', 'git switch main && git pull\ngit switch -c feature/descripcion\ngit push -u origin feature/descripcion\ngit merge main\ngit branch -d feature/descripcion'],
   ['Conflictos', 'git status                  # ¿qué archivos?\ngit merge --abort           # botón de emergencia\n# editar, quitar marcas <<<<<<< ======= >>>>>>>\ngit add archivo\ngit commit'],
   ['Deshacer', 'git restore archivo         # descarta cambios (¡se pierden!)\ngit restore --staged archivo\ngit reset --soft HEAD~1     # solo sin push\ngit revert codigo           # ya publicado\ngit stash push -m "..." / git stash pop\ngit reflog                  # red de seguridad'],
-  ['Investigar', 'git log --oneline --author="Ana"\ngit log --oneline -S "texto"\ngit blame archivo\ngit show codigo:archivo\ngit log --oneline main..mi-rama\ngit fetch'],
+  ['Investigar', 'git log --oneline --author="‹A›"\ngit log --oneline -S "texto"\ngit blame archivo\ngit show codigo:archivo\ngit log --oneline main..mi-rama\ngit fetch'],
   ['Versiones y forks', 'git tag -a v1.0.0 -m "Mensaje"\ngit push origin v1.0.0\ngit remote add upstream URL-del-original'],
   ['Nunca en ramas compartidas', 'git push --force\ngit reset --hard   (sobre commits publicados)\ngit rebase         (de commits que otros ya descargaron)']
 ];
@@ -2428,6 +2459,25 @@ function renderNav() {
   nav.append(link('glosario', 'Aa', 'Glosario de bolsillo', null), link('comandos', '$_', 'Hoja de comandos', null));
 }
 
+const AV = { marcos: 'var(--teal)', katherine: 'var(--accent)', cesar: 'var(--gold)' };
+function teamBlock(intro) {
+  const box = h('section', { class: 'block' + (hasWho() ? '' : ' act') }, h('div', { class: 'kind' }, h('i', null, '👥'), 'El equipo de sitio-oficina'),
+    h('p', { html: intro }));
+  const row = h('div', { class: 'team' });
+  Object.entries(TEAM).forEach(([k, t]) => row.append(h('button', { class: 'member' + (hasWho() && k === WHO ? ' sel' : ''), type: 'button', onclick: () => {
+    WHO = k; try { localStorage.setItem('gsm-curso-who', k); } catch (e) {}
+    toast(nm('Ahora eres <b>‹YO›</b>. Tus compañeros: ‹A› y ‹B›.')); route();
+  } }, h('span', { class: 'av', style: 'background:' + AV[k] }, t.name[0]), h('b', null, t.name), h('small', null, t.mail), h('small', null, hasWho() && k === WHO ? 'Eres tú ✓' : 'Ser ' + t.name))));
+  box.append(row);
+  if (hasWho()) box.append(h('p', { class: 'muted', style: 'margin:0', html: 'Eres <b>‹YO›</b>. En las prácticas, <b>‹A›</b> y <b>‹B›</b> publican cambios, revisan tus Merge Requests y a veces tocan lo mismo que tú. Puedes cambiar de persona cuando quieras.' }));
+  else box.append(h('p', { class: 'muted', style: 'margin:0' }, 'Si todavía no eliges, practicarás como Marcos.'));
+  return box;
+}
+function renderWhoBox() {
+  const el = document.getElementById('whobox'); el.innerHTML = '';
+  el.append(h('span', { class: 'av', style: 'width:26px;height:26px;border-radius:50%;display:grid;place-items:center;color:#fff;font:700 .8rem var(--f-display);background:' + AV[WHO] }, me().name[0]),
+    h('span', null, 'Eres ', h('b', null, me().name)), h('a', { href: '#equipo', style: 'font-size:.78rem' }, hasWho() ? 'cambiar' : 'elegir'));
+}
 function renderBlock(b) {
   if (b.story) return h('section', { class: 'block story' }, h('div', { class: 'kind' }, h('i', null, '❝'), 'Historia real'), h('div', { html: b.story }));
   if (b.analogy) return h('section', { class: 'block analogy' }, h('div', { class: 'kind' }, h('i', null, '≈'), 'Para entenderlo fácil'), h('div', { html: b.analogy }));
@@ -2446,6 +2496,7 @@ function renderModule(m) {
     h('h1', null, m.title), h('p', { class: 'lead' }, m.short + '.'),
     ROADMAP[m.id] ? h('div', { class: 'fb info', style: 'margin:0', html: '📁 <b>Tu proyecto <code>sitio-oficina</code> en este módulo:</b> ' + ROADMAP[m.id] }) : null,
     h('div', { class: 'meta' }, h('span', { class: 'tag goal' }, '🎯 ' + m.goal), h('span', { class: 'tag' }, '⏱ ' + m.time), h('span', { class: 'tag' }, acts.length + ' actividades')), steps));
+  if (m.id === 'm2') view.append(teamBlock('Antes de configurar Git, elige quién eres en el equipo. Tu nombre y tu correo serán los de esa persona, y los otros dos serán tus compañeros en todo el proyecto.'));
   m.blocks.forEach(b => view.append(renderBlock(b)));
   view.append(h('nav', { class: 'navbtns', 'aria-label': 'Navegación entre módulos' },
     prev ? h('a', { class: 'btn ghost', href: '#' + prev.id, style: 'text-decoration:none' }, '← ' + prev.title) : h('a', { class: 'btn ghost', href: '#inicio', style: 'text-decoration:none' }, '← Inicio'),
@@ -2466,8 +2517,9 @@ function renderHome() {
     h('div', { class: 'mini' }, h('b', null, '>_ Práctica en la terminal'), h('p', null, 'Misiones paso a paso con un mapa que dibuja lo que pasa, en vivo.')),
     h('div', { class: 'mini' }, h('b', null, '✓ Retos y checklist'), h('p', null, 'Quizzes, juegos de ordenar y clasificar, y un checklist para comprobar lo aprendido.'))),
     h('p', { class: 'muted', style: 'margin:0' }, 'Tu avance se guarda en este navegador. Puedes repetir cualquier actividad cuando quieras. No necesitas conocimientos previos: todo se explica aquí, paso a paso. Vas a equivocarte, y está bien. Casi todo en Git se puede deshacer.')));
+  view.append(Object.assign(teamBlock('<code>sitio-oficina</code> lo llevan tres personas: <b>Marcos</b>, <b>Katherine</b> y <b>César</b>. ¿Quién eres tú? Los otros dos serán tus compañeros durante todo el curso.'), { id: 'equipo' }));
   view.append(h('section', { class: 'block analogy' }, h('div', { class: 'kind' }, h('i', null, '📁'), 'Un solo proyecto, de principio a fin'),
-    h('p', { html: 'Durante todo el curso trabajas en <b>el mismo proyecto</b>: <code>sitio-oficina</code>, la página web de la oficina que mantienes con Ana y Luis. Lo descargas en el módulo 2 y cada módulo le agrega algo, como en un equipo real. Cuando empieces una práctica, el proyecto estará tal como quedó en la anterior, más lo que tu equipo haya publicado mientras tanto.' }),
+    h('p', { html: 'Durante todo el curso trabajas en <b>el mismo proyecto</b>: <code>sitio-oficina</code>, la página web de la oficina que mantienes con ‹A› y ‹B›. Lo descargas en el módulo 2 y cada módulo le agrega algo, como en un equipo real. Cuando empieces una práctica, el proyecto estará tal como quedó en la anterior, más lo que tu equipo haya publicado mientras tanto.' }),
     h('ol', { class: 'olist' }, MODULES.filter(m => ['m2', 'm3', 'm4', 'm5', 'm6', 'm7', 'm12', 'm13', 'm14'].includes(m.id)).map(m => h('li', null, h('span', { class: 'n' }, m.n), h('span', { html: '<a href="#' + m.id + '">' + esc(m.title) + '</a>: ' + ROADMAP[m.id] }))))));
   STAGES.forEach(([name, ids]) => {
     view.append(h('div', { class: 'stage-label' }, name));
@@ -2493,13 +2545,14 @@ function renderCheats() {
 }
 
 function route() {
-  const id = location.hash.slice(1) || 'inicio';
+  let id = location.hash.slice(1) || 'inicio'; const goTeam = id === 'equipo'; if (goTeam) id = 'inicio';
   view.innerHTML = '';
   document.body.classList.remove('menu'); const sc = document.querySelector('.scrim'); if (sc) sc.remove();
   const m = MODULES.find(x => x.id === id);
   if (m) renderModule(m); else if (id === 'glosario') renderGlossary(); else if (id === 'comandos') renderCheats(); else renderHome();
   document.getElementById('topTitle').textContent = m ? 'Módulo ' + m.n + ' · ' + m.title : id === 'glosario' ? 'Glosario' : id === 'comandos' ? 'Comandos' : 'Git sin miedo';
-  renderNav(); window.scrollTo(0, 0);
+  renderNav(); renderWhoBox();
+  if (goTeam) { const t = document.getElementById('equipo'); if (t) t.scrollIntoView(); } else window.scrollTo(0, 0);
 }
 window.addEventListener('hashchange', route);
 
@@ -2514,6 +2567,13 @@ resetBtn.addEventListener('click', () => {
   if (resetBtn.dataset.confirm) { P = { done: {}, checks: {}, xp: 0, seen: {} }; save(); delete resetBtn.dataset.confirm; resetBtn.textContent = 'Reiniciar progreso'; refreshProgress(); route(); toast('Progreso reiniciado'); return; }
   resetBtn.dataset.confirm = '1'; resetBtn.textContent = '¿Seguro? Toca otra vez'; setTimeout(() => { delete resetBtn.dataset.confirm; resetBtn.textContent = 'Reiniciar progreso'; }, 3500);
 });
+/* Los textos llevan marcas ‹YO› ‹A› ‹B›: se cambian por los nombres del equipo al mostrarse. */
+function fixNames(root) {
+  const w = document.createTreeWalker(root, NodeFilter.SHOW_TEXT); let n;
+  while ((n = w.nextNode())) if (n.nodeValue.indexOf('‹') >= 0) n.nodeValue = nm(n.nodeValue);
+}
+new MutationObserver(ms => ms.forEach(m => { if (m.type === 'characterData') { if (m.target.nodeValue.indexOf('‹') >= 0) m.target.nodeValue = nm(m.target.nodeValue); } else m.addedNodes.forEach(x => { if (x.nodeType === 3) { if (x.nodeValue.indexOf('‹') >= 0) x.nodeValue = nm(x.nodeValue); } else if (x.nodeType === 1) fixNames(x); }); }))
+  .observe(document.body, { childList: true, subtree: true, characterData: true });
 refreshProgress(); route();
 
 </script>

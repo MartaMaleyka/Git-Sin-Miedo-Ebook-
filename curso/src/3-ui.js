@@ -308,7 +308,7 @@ function rTerm(spec, id) {
     const resetBtn = h('button', { class: 'chipbtn', type: 'button' }, 'Reiniciar práctica');
     const hint = h('div', { class: 'hintline', hidden: true });
     hintBtn.onclick = () => { const g = spec.goals[gi]; if (!g) return; hint.hidden = false; hint.innerHTML = g.hint ? 'Prueba con: <code>' + esc(g.hint) + '</code>' + (g.why ? '<br>' + g.why : '') : 'Revisa el objetivo y usa <code>git status</code> para orientarte.'; };
-    fillBtn.onclick = () => { const g = spec.goals[gi]; if (g && g.hint) { input.value = g.hint; input.focus(); } };
+    fillBtn.onclick = () => { const g = spec.goals[gi]; if (g && g.hint) { input.value = nm(g.hint); input.focus(); } };
     resetBtn.onclick = () => start();
     goalsEl.append(h('h4', null, finished ? '¡Misión cumplida! 🎉' : 'Tu misión'), ol, h('div', { class: 'row', style: 'margin-top:8px;gap:6px' }, finished ? null : hintBtn, finished ? null : fillBtn, resetBtn), hint);
     if (finished && spec.outro) goalsEl.append(h('div', { class: 'hintline', html: spec.outro }));
@@ -342,7 +342,7 @@ function rTerm(spec, id) {
     } }, a.label)));
     viz.insertBefore(bar, mapEl);
   }
-  (spec.quick || ['git status', 'git log --oneline', 'ls', 'help']).forEach(q => quick.append(h('button', { type: 'button', onclick: () => { input.value = q; input.focus(); } }, q)));
+  (spec.quick || ['git status', 'git log --oneline', 'ls', 'help']).forEach(q => quick.append(h('button', { type: 'button', onclick: () => { input.value = nm(q); input.focus(); } }, nm(q))));
   function start() {
     sim = new Sim(); if (spec.setup) spec.setup(sim);
     gi = 0; finished = false; out.innerHTML = '';

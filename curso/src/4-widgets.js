@@ -5,11 +5,11 @@ const W = {};
 
 /* Cap. 0 — mismo problema, con y sin Git */
 W.compare = function (spec, id) {
-  const { box, markDone } = actBox(id, 'Ana y Luis: el mismo problema, dos finales', '▶', null, 15);
+  const { box, markDone } = actBox(id, '‹A› y ‹B›: el mismo problema, dos finales', '▶', null, 15);
   const seen = new Set();
   const flows = {
-    sin: ['Ana cambia el horario de atención en su copia de la página.', 'Al mismo tiempo, Luis corrige el teléfono en <i>su</i> copia.', 'Ana sube su versión al servidor.', 'Luis sube la suya <b>después</b>: su archivo todavía tiene el horario viejo.', '<b>Resultado:</b> el teléfono quedó bien, pero el horario volvió a ser el viejo. Un usuario llega a una oficina cerrada. Nadie sabe qué pasó.'],
-    con: ['Ana guarda su cambio: <code>Actualiza horario de atención</code>.', 'Luis guarda el suyo: <code>Corrige teléfono de contacto</code>.', 'Cuando Luis intenta publicar, Git le avisa: <i>hay cambios nuevos de Ana</i>.', 'Luis los trae primero. Git junta los dos cambios porque tocan partes distintas.', '<b>Resultado:</b> se publica todo junto. Y cualquiera puede ver quién cambió el horario y cuándo.']
+    sin: ['‹A› cambia el horario de atención en su copia de la página.', 'Al mismo tiempo, ‹B› corrige el teléfono en <i>su</i> copia.', '‹A› sube su versión al servidor.', '‹B› sube la suya <b>después</b>: su archivo todavía tiene el horario viejo.', '<b>Resultado:</b> el teléfono quedó bien, pero el horario volvió a ser el viejo. Un usuario llega a una oficina cerrada. Nadie sabe qué pasó.'],
+    con: ['‹A› guarda su cambio: <code>Actualiza horario de atención</code>.', '‹B› guarda el suyo: <code>Corrige teléfono de contacto</code>.', 'Cuando ‹B› intenta publicar, Git le avisa: <i>hay cambios nuevos de ‹A›</i>.', '‹B› los trae primero. Git junta los dos cambios porque tocan partes distintas.', '<b>Resultado:</b> se publica todo junto. Y cualquiera puede ver quién cambió el horario y cuándo.']
   };
   const pane = h('ol', { class: 'olist' }); let mode = null, step = 0;
   const nextBtn = h('button', { class: 'btn teal', type: 'button', hidden: true }, 'Siguiente paso');
@@ -22,7 +22,7 @@ W.compare = function (spec, id) {
   const b1 = h('button', { class: 'btn ghost', type: 'button', onclick: () => { mode = 'sin'; step = 0; draw(); b1.className = 'btn'; b2.className = 'btn ghost'; } }, '😬 Sin Git');
   const b2 = h('button', { class: 'btn ghost', type: 'button', onclick: () => { mode = 'con'; step = 0; draw(); b2.className = 'btn'; b1.className = 'btn ghost'; } }, '😌 Con Git');
   nextBtn.onclick = () => { step++; draw(); };
-  box.append(h('p', null, 'Ana y Luis mantienen la página web de su oficina. Mira la historia de las dos formas.'), h('div', { class: 'row' }, b1, b2), pane, h('div', { class: 'row' }, nextBtn));
+  box.append(h('p', null, '‹A› y ‹B› mantienen la página web de su oficina. Mira la historia de las dos formas.'), h('div', { class: 'row' }, b1, b2), pane, h('div', { class: 'row' }, nextBtn));
   return box;
 };
 
@@ -33,9 +33,9 @@ W.journey = function (spec, id) {
     { b: 'Editar el archivo', where: [1, 0, 0], txt: 'Cambiaste <code>contacto.md</code>. El cambio existe solo en tu carpeta. Si cierras sin guardar, se pierde.' },
     { b: 'git commit', where: [2, 0, 0], txt: 'Guardaste un <b>punto de guardado</b> en tu cuaderno. Sigue <b>solo en tu computadora</b>. Si tu disco se daña, se pierde. Y tu equipo no lo ha visto.' },
     { b: 'git push', where: [2, 2, 0], txt: 'Enviaste tus commits a GitLab. <b>Ahora el equipo puede verlos.</b>' },
-    { b: 'git pull (Luis)', where: [2, 2, 2], txt: 'Luis trae tus cambios a su computadora. El viaje terminó: los tres lugares tienen lo mismo.' }
+    { b: 'git pull (‹B›)', where: [2, 2, 2], txt: '‹B› trae tus cambios a su computadora. El viaje terminó: los tres lugares tienen lo mismo.' }
   ];
-  const places = ['💻 Tu computadora', '☁️ GitLab (remoto)', '💻 Compu de Luis'];
+  const places = ['💻 Tu computadora', '☁️ GitLab (remoto)', '💻 Compu de ‹B›'];
   const labels = ['—', 'cambio sin guardar', 'commit a3f9c21'];
   let st = -1; const grid = h('div', { class: 'grid2' }); const msg = h('div', { class: 'fb info' }, 'Pulsa el primer botón para empezar.');
   const btns = h('div', { class: 'row' });
@@ -196,7 +196,7 @@ W.mr = function (spec, id) {
   };
   // 1: título
   steps[1] = () => {
-    const opts = ['Cambios', 'Rama de Ana', 'Agrega sección Sobre mí con mi presentación', 'fix'];
+    const opts = ['Cambios', 'Rama de ‹A›', 'Agrega sección Sobre mí con mi presentación', 'fix'];
     card.append(h('div', { class: 'mrh' }, h('b', null, 'Paso 2 · El título')), h('p', null, 'Igual que un buen commit: empieza con un verbo y di qué hace el cambio.'));
     const o = h('div', { class: 'opts' }); opts.forEach(t => o.append(h('button', { class: 'opt', type: 'button', onclick: () => { if (t.startsWith('Agrega')) { S.title = t; setFb('good', 'Título claro: quien revisa ya sabe de qué se trata antes de abrir nada.'); go(2); } else setFb('badfb', '«' + t + '» no dice qué cambia. ¿Qué entendería alguien que no sabe nada de tu trabajo?'); } }, t)));
     card.append(o);
@@ -223,7 +223,7 @@ W.mr = function (spec, id) {
   // 4: comentario bloqueante
   steps[4] = () => {
     card.append(h('div', { class: 'mrh' }, h('b', null, S.title), h('span', { class: 'state open' }, 'Open')),
-      h('div', { class: 'comment', html: '<b>Ana</b> · <i>Bloqueante</i><br>En <code>sobre-mi.md</code> línea 3 falta tu correo de contacto. Sin eso, la sección queda incompleta.' }),
+      h('div', { class: 'comment', html: '<b>‹A›</b> · <i>Bloqueante</i><br>En <code>sobre-mi.md</code> línea 3 falta tu correo de contacto. Sin eso, la sección queda incompleta.' }),
       h('p', null, '¿Cómo atiendes el comentario?'));
     const o = h('div', { class: 'opts' });
     [['Corrijo en mi rama, hago commit y git push a la misma rama', true, 'Exacto: no hace falta otra MR. Al hacer push a la misma rama, la MR se actualiza sola.'], ['Abro una Merge Request nueva con la corrección', false, 'No hace falta: el push a la misma rama actualiza la MR que ya existe.'], ['Le respondo "así está bien" y fusiono', false, 'Un comentario bloqueante se corrige antes de fusionar. Si no estás de acuerdo, se explica con respeto, no se ignora.']].forEach(([t, ok, w]) => o.append(h('button', { class: 'opt', type: 'button', onclick: () => { if (ok) { setFb('good', w); go(5); } else setFb('badfb', w); } }, t)));
@@ -237,7 +237,7 @@ W.mr = function (spec, id) {
     const del = h('label', { style: 'display:flex;gap:8px;align-items:center;font-size:.9rem' }, h('input', { type: 'checkbox', id: 'mr-del-' + id, checked: true }), 'Delete source branch');
     let resolved = false, green = false;
     const upd = () => { merge.disabled = !(resolved && green); };
-    thread.onclick = () => { resolved = true; thread.disabled = true; thread.textContent = 'Hilo resuelto ✓ · Ana aprobó'; upd(); };
+    thread.onclick = () => { resolved = true; thread.disabled = true; thread.textContent = 'Hilo resuelto ✓ · ‹A› aprobó'; upd(); };
     setTimeout(() => { pipe.className = 'job passed'; pipe.lastChild.textContent = 'pipeline: passed'; green = true; upd(); }, 1800);
     merge.onclick = () => { setFb('good', '¡Fusionado! Tus cambios entraron a main' + (document.getElementById('mr-del-' + id).checked ? ' y la rama se borró sola en GitLab.' : '.') + ' Falta un último paso en tu computadora.'); go(6); };
     card.append(h('div', { class: 'mrh' }, h('b', null, S.title), h('span', { class: 'state open' }, 'Open')), h('p', { html: 'GitLab activa el botón Merge cuando se cumplen las condiciones: aprobación, hilos resueltos y <b>pipeline</b> en verde. El pipeline es una revisión automática que GitLab ejecuta con cada cambio (lo verás a fondo en el módulo 9).' }), thread, pipe, del, h('div', { class: 'row' }, merge));
@@ -261,17 +261,17 @@ W.mr = function (spec, id) {
 
 /* Cap. 6 — resolver un conflicto a mano */
 W.conflict = function (spec, id) {
-  const { box, markDone } = actBox(id, 'Resuelve el conflicto de Ana', '⚡', null, 30);
+  const { box, markDone } = actBox(id, 'Resuelve el conflicto de ‹A›', '⚡', null, 30);
   const raw = '# Contacto\n\n<<<<<<< HEAD\nHorario: lunes a viernes, 8:00 a 5:00\n=======\nHorario: lunes a viernes, 8:00 a 4:30\n>>>>>>> main\n\nTeléfono: 500-0000\n';
   const view = h('div', { class: 'conflict', html: '# Contacto\n\n<span class="mk">&lt;&lt;&lt;&lt;&lt;&lt;&lt; HEAD</span><span class="ours">Horario: lunes a viernes, 8:00 a 5:00</span><span class="mk">=======</span><span class="theirs">Horario: lunes a viernes, 8:00 a 4:30</span><span class="mk">&gt;&gt;&gt;&gt;&gt;&gt;&gt; main</span>\nTeléfono: 500-0000' });
   const ctx = h('div', { class: 'grid2' },
-    h('div', { class: 'mini', style: 'background:var(--teal-soft)' }, h('b', null, 'Tu cambio (HEAD)'), h('p', { html: 'Ana: <code>Cambia horario general a 5:00</code>. El horario de toda la semana se extendió.' })),
-    h('div', { class: 'mini', style: 'background:var(--gold-soft)' }, h('b', null, 'El cambio que llega (main)'), h('p', { html: 'Luis: <code>Ajusta horario del viernes por nueva disposición</code>. Los viernes se cierra antes.' })));
+    h('div', { class: 'mini', style: 'background:var(--teal-soft)' }, h('b', null, 'Tu cambio (HEAD)'), h('p', { html: '‹A›: <code>Cambia horario general a 5:00</code>. El horario de toda la semana se extendió.' })),
+    h('div', { class: 'mini', style: 'background:var(--gold-soft)' }, h('b', null, 'El cambio que llega (main)'), h('p', { html: '‹B›: <code>Ajusta horario del viernes por nueva disposición</code>. Los viernes se cierra antes.' })));
   const fb = h('div', { class: 'fb info', html: 'Primero lee los dos cambios. ¿Qué intentaba hacer cada uno? Luego elige.' });
   const editor = h('textarea', { class: 'fillin', id: 'cf-' + id, hidden: true }); editor.value = raw;
   const finish = h('button', { class: 'btn teal', type: 'button', hidden: true }, 'git add contacto.md + git commit');
   const o = h('div', { class: 'opts' });
-  [['Accept Current Change: me quedo con mi versión (5:00)', 'Se perdió en silencio el ajuste del viernes de Luis. Los viernes la página dirá 5:00 y la oficina estará cerrada a las 4:30. Es el error más común: resolver borrando el trabajo del otro.'],
+  [['Accept Current Change: me quedo con mi versión (5:00)', 'Se perdió en silencio el ajuste del viernes de ‹B›. Los viernes la página dirá 5:00 y la oficina estará cerrada a las 4:30. Es el error más común: resolver borrando el trabajo del otro.'],
    ['Accept Incoming Change: me quedo con la otra (4:30)', 'Ahora se perdió tu cambio: el horario general vuelve a ser el viejo. Rara vez uno de los dos cambios sobra por completo.'],
    ['Accept Both: conservo las dos líneas', 'Quedan dos horarios contradictorios, uno debajo de otro. ¿Cuál es el bueno? El usuario no lo sabrá.'],
    ['Combinar: cada cambio tiene una parte correcta', null]].forEach(([t, bad]) => o.append(h('button', { class: 'opt', type: 'button', onclick: (e) => {
@@ -284,9 +284,9 @@ W.conflict = function (spec, id) {
     if (/^(<{7}|={7}|>{7})/m.test(v)) { fb.className = 'fb badfb'; fb.innerHTML = 'Todavía quedan marcas de conflicto en el archivo. Busca <code>&lt;&lt;&lt;&lt;&lt;&lt;&lt;</code>: no debe quedar ninguna.'; return; }
     if (!/5:00/.test(v) || !/4:30/.test(v)) { fb.className = 'fb badfb'; fb.innerHTML = 'El archivo ya no tiene marcas, pero falta uno de los dos cambios: tiene que aparecer el horario general (5:00) <b>y</b> el del viernes (4:30).'; return; }
     if (!/Teléfono: 500-0000/.test(v)) { fb.className = 'fb badfb'; fb.innerHTML = 'Se perdió la línea del teléfono, que no tenía conflicto. Déjala como estaba.'; return; }
-    fb.className = 'fb good'; fb.innerHTML = '<b>Conflicto bien resuelto.</b> Nadie perdió trabajo. En el mensaje del commit, Ana anota: <i>Combina horario nuevo con el ajuste del viernes de Luis</i>. Y luego prueba que todo funcione.'; markDone('Conflicto resuelto sin borrar a nadie');
+    fb.className = 'fb good'; fb.innerHTML = '<b>Conflicto bien resuelto.</b> Nadie perdió trabajo. En el mensaje del commit, ‹A› anota: <i>Combina horario nuevo con el ajuste del viernes de ‹B›</i>. Y luego prueba que todo funcione.'; markDone('Conflicto resuelto sin borrar a nadie');
   };
-  box.append(h('p', { html: 'Ana trajo <code>main</code> a su rama con <code>git merge main</code> y apareció esto en <code>contacto.md</code>:' }), view, ctx, h('p', { class: 'qt', style: 'font-weight:600;margin:0' }, '¿Cómo debe quedar?'), o, editor, h('div', { class: 'row' }, finish), fb);
+  box.append(h('p', { html: '‹A› trajo <code>main</code> a su rama con <code>git merge main</code> y apareció esto en <code>contacto.md</code>:' }), view, ctx, h('p', { class: 'qt', style: 'font-weight:600;margin:0' }, '¿Cómo debe quedar?'), o, editor, h('div', { class: 'row' }, finish), fb);
   return box;
 };
 
@@ -348,8 +348,8 @@ W.kanban = function (spec, id) {
   const cols = ['Por hacer', 'En progreso', 'En revisión', 'Cerrado'];
   const labels = ['por hacer', 'en progreso', 'en revisión', 'cerrado'];
   const cards = [{ n: 45, t: 'Filtro por fecha', c: 0 }, { n: 42, t: 'Página en blanco al enviar formulario sin fecha', c: 0, star: true }, { n: 40, t: 'Teléfono en pie de página', c: 2 }, { n: 38, t: 'Logo nuevo', c: 3 }];
-  const visited = new Set([0]); const board = h('div', { class: 'kanban' }); const fb = h('div', { class: 'fb info', html: 'Luis se asigna el #42. Muévelo columna por columna y mira cómo cambia su etiqueta.' });
-  const events = ['', 'Luis se lo asigna y empieza. Etiqueta: <b>en progreso</b>.', 'Abrió la Merge Request con <code>Closes #42</code>. Etiqueta: <b>en revisión</b>.', 'Ana aprobó, Luis fusionó y el issue <b>se cerró solo</b> gracias a <code>Closes #42</code>.'];
+  const visited = new Set([0]); const board = h('div', { class: 'kanban' }); const fb = h('div', { class: 'fb info', html: '‹B› se asigna el #42. Muévelo columna por columna y mira cómo cambia su etiqueta.' });
+  const events = ['', '‹B› se lo asigna y empieza. Etiqueta: <b>en progreso</b>.', 'Abrió la Merge Request con <code>Closes #42</code>. Etiqueta: <b>en revisión</b>.', '‹A› aprobó, ‹B› fusionó y el issue <b>se cerró solo</b> gracias a <code>Closes #42</code>.'];
   const draw = () => {
     board.innerHTML = '';
     cols.forEach((c, ci) => {
@@ -374,7 +374,7 @@ W.pipeline = function (spec, id) {
   const { box, markDone } = actBox(id, 'Lee el semáforo del pipeline', '●', null, 30);
   const stages = [['construir', ['compilar']], ['probar', ['pruebas', 'estilo']], ['publicar', ['desplegar-pruebas']]];
   let fixed = false, running = false;
-  const pipe = h('div', { class: 'pipe' }); const fb = h('div', { class: 'fb info', html: 'Luis abrió una MR que cambia el formato de fechas del reporte. Ejecuta el pipeline.' });
+  const pipe = h('div', { class: 'pipe' }); const fb = h('div', { class: 'fb info', html: '‹B› abrió una MR que cambia el formato de fechas del reporte. Ejecuta el pipeline.' });
   const log = h('div', { class: 'log', hidden: true }); const choice = h('div', { class: 'opts', hidden: true });
   const jobs = {};
   const draw = st => {
@@ -387,7 +387,7 @@ W.pipeline = function (spec, id) {
     const seq = [['compilar', 'passed'], ['pruebas', fixed ? 'passed' : 'failed'], ['estilo', 'passed'], ['desplegar-pruebas', fixed ? 'passed' : 'skipped']];
     let i = 0;
     const tick = () => {
-      if (i >= seq.length) { running = false; if (fixed) { fb.className = 'fb good'; fb.innerHTML = '<b>Verde.</b> Las revisiones automáticas pasaron. Ojo: verde no significa perfecto; Ana todavía revisa la lógica. Máquina y personas se complementan.'; markDone('Pipeline en verde'); } else { fb.className = 'fb badfb'; fb.innerHTML = '<b>Rojo.</b> Un trabajo falló y la etapa <i>publicar</i> quedó <b>skipped</b>. Toca el trabajo con la ✕ para leer su registro.'; } return; }
+      if (i >= seq.length) { running = false; if (fixed) { fb.className = 'fb good'; fb.innerHTML = '<b>Verde.</b> Las revisiones automáticas pasaron. Ojo: verde no significa perfecto; ‹A› todavía revisa la lógica. Máquina y personas se complementan.'; markDone('Pipeline en verde'); } else { fb.className = 'fb badfb'; fb.innerHTML = '<b>Rojo.</b> Un trabajo falló y la etapa <i>publicar</i> quedó <b>skipped</b>. Toca el trabajo con la ✕ para leer su registro.'; } return; }
       const [j, r] = seq[i]; st[j] = 'running'; draw(st);
       setTimeout(() => { st[j] = r; draw(st); i++; tick(); }, r === 'skipped' ? 300 : 650);
     };
@@ -400,7 +400,7 @@ W.pipeline = function (spec, id) {
     choice.hidden = false; choice.innerHTML = '';
     [['Fusiono igual, seguro no es nada', 'Nunca se fusiona en rojo. El problema terminaría en producción, en el reporte que usan todos.'], ['Desactivo esa prueba para que pase', 'Borrar o desactivar una prueba esconde el problema en vez de resolverlo.'], ['Le doy Retry diez veces hasta que pase', 'Retry sirve para fallos pasajeros (como la red). Si falla igual, no es pasajero. Esto es un error real.'], ['Relaciono el error con mi cambio, corrijo en mi rama y hago push', null]].forEach(([t, bad]) => choice.append(h('button', { class: 'opt', type: 'button', onclick: e => {
       if (bad) { e.currentTarget.classList.add('wrong'); fb.className = 'fb badfb'; fb.innerHTML = bad; return; }
-      e.currentTarget.classList.add('right'); fixed = true; fb.className = 'fb good'; fb.innerHTML = 'El cambio de formato rompió cómo se agrupaban los meses. Luis lo corrige y hace push: <b>el pipeline se ejecuta solo otra vez</b>.'; setTimeout(run, 900);
+      e.currentTarget.classList.add('right'); fixed = true; fb.className = 'fb good'; fb.innerHTML = 'El cambio de formato rompió cómo se agrupaban los meses. ‹B› lo corrige y hace push: <b>el pipeline se ejecuta solo otra vez</b>.'; setTimeout(run, 900);
     } }, t)));
   }
   draw({});

@@ -2,7 +2,27 @@
    Simulador de Git: una versión pequeña y honesta de Git que vive
    en el navegador. No toca tu computadora: todo es de práctica.
    ================================================================ */
-const AUTHORS = { ana: 'Ana Pérez <ana@ejemplo.com>', luis: 'Luis Gómez <luis@ejemplo.com>' };
+/* El equipo del proyecto. Quien estudia elige quién es; los otros dos son sus compañeros. */
+const TEAM = {
+  marcos: { name: 'Marcos', mail: 'marcos@oficina.com' },
+  katherine: { name: 'Katherine', mail: 'katherine@oficina.com' },
+  cesar: { name: 'César', mail: 'cesar@oficina.com' }
+};
+let WHO = 'marcos';
+try { const w = localStorage.getItem('gsm-curso-who'); if (TEAM[w]) WHO = w; } catch (e) {}
+const hasWho = () => { try { return !!TEAM[localStorage.getItem('gsm-curso-who')]; } catch (e) { return false; } };
+const me = () => TEAM[WHO];
+const mates = () => Object.keys(TEAM).filter(k => k !== WHO).map(k => TEAM[k]);
+/* Cambia las marcas ‹YO› ‹MAIL› ‹A› ‹B› por los nombres reales del equipo. */
+function nm(s) {
+  if (typeof s !== 'string' || s.indexOf('‹') < 0) return s;
+  const [a, b] = mates();
+  return s.replace(/‹YO›/g, me().name).replace(/‹MAIL›/g, me().mail).replace(/‹A›/g, a.name).replace(/‹B›/g, b.name);
+}
+const AUTHORS = {
+  get ana() { const a = mates()[0]; return a.name + ' <' + a.mail + '>'; },
+  get luis() { const b = mates()[1]; return b.name + ' <' + b.mail + '>'; }
+};
 
 function rid() { let s = ''; for (let i = 0; i < 7; i++) s += '0123456789abcdef'[Math.floor(Math.random() * 16)]; return s; }
 function clone(o) { return JSON.parse(JSON.stringify(o)); }
@@ -96,10 +116,11 @@ class Sim {
   laneOf(r, name) { if (!(name in r.lanes)) r.lanes[name] = Object.keys(r.lanes).length; return r.lanes[name]; }
   mkCommit(r, { msg, tree, parents, author, lane }) {
     const id = rid();
-    this.commits[id] = { id, msg, tree: clone(tree), parents: parents.filter(Boolean), author: author || this.authorStr(), n: ++this.counter, lane: this.laneOf(r, lane || r.head || 'main'), date: new Date(Date.now() - (1000 - this.counter) * 3600e3).toISOString() };
+    const t = clone(tree); Object.keys(t).forEach(k => { t[k] = nm(t[k]); });
+    this.commits[id] = { id, msg: nm(msg), tree: t, parents: parents.filter(Boolean), author: nm(author || this.authorStr()), n: ++this.counter, lane: this.laneOf(r, lane || r.head || 'main'), date: new Date(Date.now() - (1000 - this.counter) * 3600e3).toISOString() };
     return id;
   }
-  authorStr() { return (this.user.name || 'Tu Nombre') + ' <' + (this.user.email || 'tu-correo@ejemplo.com') + '>'; }
+  authorStr() { return (this.user.name || '‹YO›') + ' <' + (this.user.email || '‹MAIL›') + '>'; }
   ancestors(id) { const set = new Set(), st = [id]; while (st.length) { const c = st.pop(); if (!c || set.has(c)) continue; set.add(c); st.push(...(this.commits[c]?.parents || [])); } return set; }
   isAnc(a, b) { return !a || this.ancestors(b).has(a); } // a es ancestro de b
   mergeBase(a, b) { const A = this.ancestors(a); const q = [b], seen = new Set(); let best = null; while (q.length) { const c = q.shift(); if (!c || seen.has(c)) continue; seen.add(c); if (A.has(c)) { if (!best || this.commits[c].n > this.commits[best].n) best = c; continue; } q.push(...this.commits[c].parents); } return best; }
@@ -159,7 +180,7 @@ class Sim {
 
   /* ---------- ejecutar una línea ---------- */
   run(line) {
-    line = line.trim();
+    line = nm(line).trim();
     if (!line) return { out: '' };
     const t = tokenize(line);
     const cmd = t[0];
@@ -662,7 +683,7 @@ function seedRemote(sim, url, build) {
 function setupClonedRepo(sim, name, build, opts = {}) {
   const url = 'git@gitlab.com:tu-usuario/' + name + '.git';
   seedRemote(sim, url, build);
-  sim.user = { name: 'Tu Nombre', email: 'tu-correo@ejemplo.com' };
+  sim.user = { name: '‹YO›', email: '‹MAIL›' };
   const res = sim.gClone([url]); sim.cwd = '~/' + name;
   if (opts.protectMain) sim.remotes[url].protected = true;
   return { url, repo: sim.repos[name], res };
