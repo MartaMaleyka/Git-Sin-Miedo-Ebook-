@@ -4,11 +4,6 @@
 const ran = (re) => (s, r, c) => re.test(c) && !r.err;
 const VERB_RX = /^[A-ZÁÉÍÓÚ][a-záéíóúñ]+(a|e)\b/;
 const goodMsg = m => VERB_RX.test(m || '') && m.split(/\s+/).length >= 3 && !/^(Cambios|Arreglos|Update|Prueba)\b/i.test(m);
-const PRACTICA = 'git@gitlab.com:tu-usuario/practica-git.git';
-const baseHistory = ctx => {
-  ctx.commit('Initial commit', { 'README.md': '# practica-git\n\nProyecto para practicar Git.\n' }, 'Tu Nombre <tu-correo@ejemplo.com>');
-  ctx.commit('Agrega sección de contacto', { 'contacto.md': '# Contacto\n\nHorario: lunes a viernes, 8:00 a 4:00\nTeléfono: 500-0000\n' }, 'luis');
-};
 const rp = s => s.repo;
 
 const MODULES = [
@@ -82,8 +77,8 @@ git config --global user.email "tu-correo@ejemplo.com"</pre><p><code>--global</c
     { q: 'Tus commits aparecen en GitLab sin tu foto y con un nombre raro. ¿Lo más probable?', o: ['El correo configurado en Git no coincide con el de tu cuenta de GitLab', 'GitLab está caído', 'Hiciste demasiados commits', 'Te falta instalar Git otra vez'], a: 0, why: 'Revísalo con <code>git config user.email</code> y corrígelo. Los commits nuevos saldrán bien.' }] },
   { text: `<h2>Clonar o empezar de cero</h2><div class="table"><table><tr><th></th><th>git clone</th><th>git init</th></tr><tr><td>Qué hace</td><td>Descarga un proyecto que ya existe en GitLab</td><td>Convierte una carpeta tuya en repositorio nuevo</td></tr><tr><td>¿Trae historia?</td><td>Sí, toda</td><td>No, empieza vacío</td></tr><tr><td>¿Conectado a GitLab?</td><td>Sí</td><td>No, hay que conectarlo</td></tr><tr><td>Cuándo</td><td>Casi siempre, al unirte a un proyecto</td><td>Cuando empiezas algo desde tu computadora</td></tr></table></div><p>Al clonar, Git le pone a la copia de GitLab el apodo <b><code>origin</code></b>. Lo verás en comandos como <code>git push -u origin mi-rama</code>: significa "envía a GitLab".</p><p><code>cd</code> significa "cambiar de directorio": es como hacer doble clic en una carpeta. <code>cd ..</code> te devuelve atrás y <code>ls</code> muestra lo que hay.</p>` },
   { act: 'term', title: 'Misión: deja tu computadora lista', xp: 50,
-    intro: 'Esta terminal es un simulador seguro. A la derecha ves, en vivo, lo que pasa en tu computadora y en GitLab. Cambia "Tu Nombre" por tu nombre real si quieres.',
-    setup: s => { s.clonable[PRACTICA] = (sim, url) => seedRemote(sim, url, ctx => { ctx.commit('Initial commit', { 'README.md': '# practica-git\n\nProyecto para practicar Git.\n' }, 'Tu Nombre <tu-correo@ejemplo.com>'); }); },
+    intro: 'Aquí empieza <b>tu proyecto del curso</b>: <code>sitio-oficina</code>, la página web de la oficina que mantienes con Ana y Luis. Lo vas a descargar ahora y lo harás crecer en cada módulo. La terminal es un simulador seguro; a la derecha ves en vivo lo que pasa en tu computadora y en GitLab.',
+    setup: s => buildProject(s, 'm2'), project: true,
     quick: ['git --version', 'git config --global --list', 'ls', 'help'],
     goals: [
       { t: 'Comprueba que Git está instalado', hint: 'git --version', check: ran(/^git --version$/) },
@@ -91,14 +86,14 @@ git config --global user.email "tu-correo@ejemplo.com"</pre><p><code>--global</c
       { t: 'Configura tu correo (el mismo de GitLab)', hint: 'git config --global user.email "tu-correo@ejemplo.com"', check: s => /@/.test(s.user.email) },
       { t: 'Revisa lo que configuraste', hint: 'git config --global --list', check: ran(/^git config( --global)? (--list|-l)$/) },
       { t: 'Prueba tu conexión SSH con GitLab', hint: 'ssh -T git@gitlab.com', check: ran(/^ssh -T git@gitlab\.com$/) },
-      { t: 'Clona el proyecto <code>practica-git</code>', hint: 'git clone ' + PRACTICA, check: s => !!s.repos['practica-git'], why: 'La dirección la copias del botón azul <b>Code</b> en GitLab.' },
-      { t: 'Entra a la carpeta del proyecto', hint: 'cd practica-git', check: s => s.cwd === '~/practica-git' },
-      { t: 'Mira qué hay dentro', hint: 'ls', check: (s, r, c) => /^ls/.test(c) && s.cwd === '~/practica-git' }],
-    outro: 'Tienes Git configurado y tu proyecto de práctica descargado. Lo usarás en todo el curso.' },
+      { t: 'Clona el proyecto <code>sitio-oficina</code>', hint: 'git clone ' + PROJECT_URL, check: s => !!s.repos[PROJ], why: 'La dirección la copias del botón azul <b>Code</b> en GitLab.' },
+      { t: 'Entra a la carpeta del proyecto', hint: 'cd sitio-oficina', check: s => s.cwd === '~/sitio-oficina' },
+      { t: 'Mira qué hay dentro', hint: 'ls', check: (s, r, c) => /^ls/.test(c) && s.cwd === '~/sitio-oficina' }],
+    outro: 'Tienes Git configurado y <code>sitio-oficina</code> en tu computadora. En el próximo módulo harás tu primer cambio en él.' },
   { act: 'sort', title: 'Lo que ves y qué significa', buckets: ['Estás fuera del proyecto', 'GitLab no reconoce tu llave', 'La dirección está mal o no tienes acceso', 'Git no está instalado'], items: [
     ['<code>fatal: not a git repository</code>', 0], ['<code>Permission denied (publickey)</code>', 1], ['<code>Repository not found</code>', 2], ['<code>git: command not found</code>', 3]], why: 'Cada error tiene un mensaje claro. Leerlo con calma es la mitad de la solución.' },
   { act: 'checklist', items: ['Sé abrir la terminal en mi computadora.', 'Configuré mi nombre y el mismo correo que uso en GitLab.', 'Entiendo la diferencia entre HTTPS (token) y SSH (llaves).', 'Sé que la llave privada nunca se comparte.', 'Sé clonar un proyecto y moverme entre carpetas con cd.'] },
-  { tip: `<b>En tu computadora real:</b> instala Git, crea en GitLab un proyecto en blanco llamado <code>practica-git</code> con la opción <i>Initialize repository with a README</i>, y clónalo. Si usas Windows, ejecuta una vez <code>git config --global core.autocrlf true</code>.` }
+  { tip: `<b>En tu computadora real:</b> instala Git, crea en GitLab un proyecto en blanco llamado <code>sitio-oficina</code> con la opción <i>Initialize repository with a README</i>, y clónalo. Si usas Windows, ejecuta una vez <code>git config --global core.autocrlf true</code>.` }
 ]},
 /* ------------------------------------------------------------ 3 */
 { id: 'm3', n: 3, title: 'Tu primer ciclo: mira antes de guardar', short: 'status, diff, add, commit, push', time: '35 min', goal: 'Hacer tu primer ciclo completo sin sustos',
@@ -117,8 +112,8 @@ git push                   <span class="c">#    ...y publico</span></pre><p><b>S
   { text: `<h2>.gitignore: lo que nunca debe entrar</h2><p>Un archivo de texto en la raíz del proyecto con la lista de lo que Git debe ignorar: contraseñas (<code>.env</code>), archivos del sistema (<code>.DS_Store</code>), carpetas que se generan solas (<code>node_modules/</code>) o tus notas personales. Lo que está ahí deja de salir en <code>git status</code>, así no lo agregas por accidente.</p><p class="muted" style="margin:0"><b>Ojo:</b> solo funciona con archivos que todavía no se guardaron. Si ya entró en un commit, agregarlo después no lo borra del historial.</p>` },
   { act: 'commitJudge' },
   { act: 'term', title: 'Misión: tu primer ciclo completo', xp: 60,
-    intro: 'Ya agregaste una línea al README y creaste <code>notas-personales.txt</code>. Mientras tanto, Ana publicó un cambio en GitLab (todavía no lo sabes). Sigue la misión.',
-    setup: s => { const { repo } = setupClonedRepo(s, 'practica-git', baseHistory); repo.files['README.md'] += 'Hecho por: Tu Nombre, hoy\n'; repo.files['notas-personales.txt'] = 'No olvidar: preguntar a Ana por el horario\n'; teammatePush(s, repo, 'main', 'Actualiza horario de atención', { 'contacto.md': '# Contacto\n\nHorario: lunes a viernes, 8:00 a 5:00\nTeléfono: 500-0000\n' }, 'ana'); },
+    intro: 'Seguimos con <code>sitio-oficina</code>. Ya agregaste tu nombre al README y creaste <code>notas-personales.txt</code> con apuntes tuyos. Mientras tanto, Ana publicó un cambio en GitLab (todavía no lo sabes).',
+    setup: s => buildProject(s, 'm3'), project: true,
     quick: ['git status', 'git diff', 'git diff --staged', 'git log --oneline', 'cat .gitignore'],
     goals: [
       { t: 'Mira qué está pasando', hint: 'git status', check: ran(/^git status$/) },
@@ -154,8 +149,8 @@ git push -u origin feature/formulario <span class="c"># publícala la primera ve
 git merge main                       <span class="c"># trae lo nuevo de main a tu rama</span>
 git branch -d feature/formulario     <span class="c"># bórrala cuando ya se fusionó</span></pre><p>El <code>-u</code> de <code>git push -u</code> se usa solo la primera vez: conecta tu rama con la de GitLab para que después baste con <code>git push</code>.</p><p><b>¿Y mis cambios sin guardar si cambio de rama?</b> Pueden viajar contigo o Git puede no dejarte cambiar para no pisarlos. Regla sencilla: antes de cambiar de rama, deja la carpeta limpia (haz commit, o apártalos en el "cajón" con <code>git stash</code>, que verás en el módulo 7).</p><p class="muted" style="margin:0">En tutoriales viejos verás <code>git checkout -b</code>. Hace lo mismo; <code>switch</code> es la forma moderna y clara.</p>` },
   { act: 'term', title: 'Misión: tu primera rama', xp: 60,
-    intro: 'Vas a crear la sección "Sobre mí" en una rama, sin tocar main. Mira cómo se dibuja la rama en el mapa a cada paso.',
-    setup: s => setupClonedRepo(s, 'practica-git', baseHistory),
+    intro: 'Tu commit del módulo anterior ya está en GitLab. Ahora vas a agregar a <code>sitio-oficina</code> la sección "Sobre mí", en una rama y sin tocar main. Mira cómo se dibuja la rama en el mapa a cada paso.',
+    setup: s => buildProject(s, 'm4'), project: true,
     quick: ['git status', 'git branch', 'git log --oneline --graph --all', 'ls'],
     goals: [
       { t: 'Asegúrate de partir de main al día', hint: 'git pull', check: (s, r) => !!r.pulled && !r.err },
@@ -167,7 +162,7 @@ git branch -d feature/formulario     <span class="c"># bórrala cuando ya se fus
       { t: 'Busca <code>sobre-mi.md</code> con ls. ¿Está?', hint: 'ls', check: (s, r, c) => /^ls/.test(c) && rp(s).head === 'main' },
       { t: 'Vuelve a tu rama: ahí sigue tu archivo', hint: 'git switch feature/seccion-sobre-mi', check: s => rp(s).head === 'feature/seccion-sobre-mi' },
       { t: 'Mira las ramas dibujadas', hint: 'git log --oneline --graph --all', check: ran(/^git log.*--graph/) }],
-    outro: 'El archivo "desaparece" en main porque sigue guardado en la otra rama. Nada se perdió.' },
+    outro: 'El archivo "desaparece" en main porque sigue guardado en la otra rama. Nada se perdió. En el próximo módulo pedirás que revisen esta rama con una Merge Request.' },
   { act: 'branchNames' },
   { act: 'order', title: 'Un error urgente en medio de tu trabajo', intro: 'Ana está a mitad del rediseño en <code>feature/formulario-contacto</code> y le piden corregir el teléfono hoy. Ordena lo que hace:', steps: [
     'Hace commit de lo que lleva en su rama: <code>Avance: estructura del nuevo formulario</code>',
@@ -225,8 +220,8 @@ Horario: lunes a viernes, 8:00 a 4:30
   { act: 'order', title: 'Resolver paso a paso', steps: ['No entres en pánico, no borres nada (si necesitas pensar: <code>git merge --abort</code>)', 'Entiende los dos cambios: ¿qué intentaba cada uno? Pregunta si dudas', 'Decide cómo debe quedar: tu versión, la otra, ambas o combinar', 'Edita el archivo y quita las tres marcas', 'Marca como resuelto y guarda: <code>git add</code> y <code>git commit</code>', 'Verifica que todo funciona'], why: 'La regla de oro: un conflicto se resuelve entendiendo los dos cambios, no eligiendo el tuyo por defecto.' },
   { act: 'conflict' },
   { act: 'term', title: 'Misión: provoca un conflicto a propósito', xp: 60,
-    intro: 'La mejor forma de perderle el miedo es crear uno en un lugar seguro. Ya preparamos: en <code>main</code> el horario dice 7:00 a 4:00, y en tu rama <code>fix/horario-tarde</code> dice 8:00 a 5:00.',
-    setup: s => { setupClonedRepo(s, 'practica-git', ctx => { baseHistory(ctx); ctx.commit('Agrega horario', { 'horario.md': 'Horario: 8:00 a 4:00\n' }, 'Tu Nombre <tu-correo@ejemplo.com>'); }); ['git switch -c fix/horario-tarde', 'echo "Horario: 8:00 a 5:00" > horario.md', 'git add horario.md', 'git commit -m "Extiende horario hasta las 5:00"', 'git switch main', 'echo "Horario: 7:00 a 4:00" > horario.md', 'git add horario.md', 'git commit -m "Adelanta la apertura a las 7:00"', 'git switch fix/horario-tarde'].forEach(c => s.run(c)); },
+    intro: 'Tu sección "Sobre mí" ya se fusionó en main. Ahora <code>sitio-oficina</code> tiene una página nueva, <code>horario.md</code> (8:00 a 4:00). En tu rama <code>fix/horario-tarde</code> la cambiaste a 8:00 a 5:00, y en <code>main</code> se cambió la misma línea a 7:00 a 4:00. Al juntarlas habrá conflicto.',
+    setup: s => buildProject(s, 'm6'), project: true,
     quick: ['git status', 'cat horario.md', 'git merge --abort', 'git log --oneline --graph --all'],
     goals: [
       { t: 'Trae main a tu rama', hint: 'git merge main', check: (s, r) => !!r.conflict },
@@ -253,8 +248,8 @@ Horario: lunes a viernes, 8:00 a 4:30
   { act: 'undo' },
   { act: 'reset' },
   { act: 'term', title: 'Misión 1: restore y reset --soft', xp: 50,
-    intro: 'Escribiste algo que no querías en el README. Vamos a deshacer con calma.',
-    setup: s => { const { repo } = setupClonedRepo(s, 'practica-git', baseHistory); repo.files['README.md'] += 'asdfasdf texto de prueba BORRAR\n'; },
+    intro: 'El conflicto del horario quedó resuelto y fusionado. Ahora, trabajando en <code>sitio-oficina</code>, escribiste algo que no querías en el README. Vamos a deshacer con calma.',
+    setup: s => buildProject(s, 'm7a'), project: true,
     quick: ['git status', 'git diff', 'git log --oneline', 'cat README.md'],
     goals: [
       { t: 'Mira qué vas a perder antes de descartarlo', hint: 'git diff README.md', check: ran(/^git diff( README\.md)?$/) },
@@ -266,8 +261,8 @@ Horario: lunes a viernes, 8:00 a 4:30
       { t: 'Rehazlo con un buen mensaje', hint: 'git commit -m "Agrega correo de contacto"', check: (s, r) => !!r.commit && goodMsg(r.msg) }],
     outro: 'Restore para archivos, reset para commits locales. Y nadie se enteró del mensaje feo.' },
   { act: 'term', title: 'Misión 2: revert y stash', xp: 50,
-    intro: 'Esta mañana publicaste en tu rama <code>feature/reporte</code> el commit <i>Cambia formato de totales</i>, y rompió el cálculo. Además te van a interrumpir con una urgencia.',
-    setup: s => { const { repo, url } = setupClonedRepo(s, 'practica-git', ctx => { baseHistory(ctx); ctx.commit('Agrega reporte mensual', { 'reporte.md': '# Reporte mensual\n\nTotal: 1,240\n' }, 'Tu Nombre <tu-correo@ejemplo.com>'); }); ['git switch -c feature/reporte', 'echo "# Reporte mensual" > reporte.md', 'echo "" >> reporte.md', 'echo "Total: 0 (formato nuevo)" >> reporte.md', 'git add reporte.md', 'git commit -m "Cambia formato de totales"', 'git push -u origin feature/reporte'].forEach(c => s.run(c)); },
+    intro: 'Luis agregó a <code>sitio-oficina</code> un reporte mensual. Esta mañana publicaste en tu rama <code>feature/reporte</code> el commit <i>Cambia formato de totales</i>, y rompió el cálculo. Además te van a interrumpir con una urgencia.',
+    setup: s => buildProject(s, 'm7b'), project: true,
     quick: ['git status', 'git log --oneline', 'git stash list', 'cat reporte.md'],
     goals: [
       { t: 'Busca el código del commit que rompió el total', hint: 'git log --oneline', check: ran(/^git log/) },
@@ -280,8 +275,8 @@ Horario: lunes a viernes, 8:00 a 4:30
       { t: 'Recupera tu trabajo del cajón', hint: 'git stash pop', check: (s, r) => !!r.popped }],
     outro: 'Revert no borra historia: se ven los dos commits. Y el stash es para minutos u horas, no para semanas.' },
   { act: 'term', title: 'Misión 3: rescate con reflog', xp: 40,
-    intro: 'Vas a "perder" un commit a propósito y recuperarlo. Este es el secreto que tranquiliza a todo el mundo.',
-    setup: s => { setupClonedRepo(s, 'practica-git', baseHistory); ['echo "Ana: 500-1111" > equipo.md', 'git add equipo.md', 'git commit -m "Agrega lista del equipo"'].forEach(c => s.run(c)); },
+    intro: 'Acabas de agregar a <code>sitio-oficina</code> la lista del equipo (sin publicar todavía). Vas a "perderla" a propósito y recuperarla. Este es el secreto que tranquiliza a todo el mundo.',
+    setup: s => buildProject(s, 'm7c'), project: true,
     quick: ['git log --oneline', 'git reflog', 'ls', 'git branch'],
     goals: [
       { t: 'Mira la historia: tu último commit es <i>Agrega lista del equipo</i>', hint: 'git log --oneline', check: ran(/^git log/) },
@@ -363,15 +358,8 @@ Closes #42                                          <span class="c"># en la desc
   blocks: [
   { text: `<h2>Preguntas y comandos</h2><div class="table"><table><tr><th>Pregunta</th><th>Comando</th></tr><tr><td>¿Qué hizo Ana?</td><td><code>git log --oneline --author="Ana"</code></td></tr><tr><td>¿Qué cambió esta semana?</td><td><code>git log --oneline --since="1 week ago"</code></td></tr><tr><td>¿Qué commits tocaron este archivo?</td><td><code>git log --oneline -- contacto.md</code></td></tr><tr><td>¿Qué commits mencionan "horario"?</td><td><code>git log --oneline --grep="horario"</code></td></tr><tr><td>¿Qué commit agregó o quitó este texto?</td><td><code>git log --oneline -S "500-0000"</code></td></tr><tr><td>¿Quién escribió cada línea?</td><td><code>git blame contacto.md</code></td></tr><tr><td>¿Cómo era el archivo antes?</td><td><code>git show a3f9c21:contacto.md</code></td></tr></table></div><p><b>Sobre blame:</b> significa "culpar", pero no lo uses para buscar culpables. Úsalo para saber <b>a quién preguntar</b>.</p>` },
   { act: 'term', title: 'Misión: el teléfono que cambió solo', xp: 60,
-    intro: 'Un usuario reporta que el teléfono del sitio está mal. Debería ser <b>500-0000</b>. Nadie recuerda haberlo cambiado. Investiga.',
-    setup: s => setupClonedRepo(s, 'practica-git', ctx => {
-      ctx.commit('Initial commit', { 'README.md': '# practica-git\n\nSitio de la oficina.\n' }, 'ana');
-      ctx.commit('Agrega sección de contacto', { 'contacto.md': '# Contacto\n\nHorario: lunes a viernes, 8:00 a 4:00\nTeléfono: 500-0000\n' }, 'luis');
-      ctx.commit('Actualiza horario de atención', { 'contacto.md': '# Contacto\n\nHorario: lunes a viernes, 8:00 a 5:00\nTeléfono: 500-0000\n' }, 'ana');
-      ctx.commit('Agrega filtro por fecha en la búsqueda', { 'busqueda.md': '# Búsqueda\n\nFiltro por fecha: desde / hasta\n' }, 'luis');
-      ctx.commit('Corrige typo en el README', { 'README.md': '# practica-git\n\nSitio web de la oficina.\n' }, 'ana');
-      ctx.commit('Actualiza pie de página', { 'contacto.md': '# Contacto\n\nHorario: lunes a viernes, 8:00 a 5:00\nTeléfono: 500-1234\n', 'pie.md': 'Oficina central · 2026\n' }, 'luis');
-    }),
+    intro: 'Mientras aprendías a organizarte, el equipo siguió trabajando en <code>sitio-oficina</code> y ya trajiste sus cambios con <code>git pull</code>. Ahora un usuario reporta que el teléfono de la página está mal: debería ser <b>500-0000</b>. Nadie recuerda haberlo cambiado. Investiga.',
+    setup: s => buildProject(s, 'm12'), project: true,
     quick: ['git log --oneline', 'cat contacto.md', 'git blame contacto.md'],
     goals: [
       { t: 'Lista solo los commits de Ana', hint: 'git log --oneline --author="Ana"', check: (s, r, c) => /--author/.test(c) && !r.err },
@@ -402,15 +390,15 @@ rama:         C --- D ----/</pre><p>Si main sí cambió, Git crea un commit espe
   { text: `<h2>Etiquetas: un separador en la página</h2><p>Un usuario dice: <i>"esto funcionaba en la versión del mes pasado"</i>. ¿Qué commit era? Si nadie lo marcó, toca adivinar entre cientos. Una <b>etiqueta</b> (tag) es un nombre fijo para un commit. A diferencia de una rama, <b>no se mueve</b>.</p><h3>Versionado semántico: MAYOR.MENOR.PARCHE</h3><div class="table"><table><tr><th>Parte</th><th>Cuándo sube</th><th>Ejemplo</th></tr><tr><td>PARCHE</td><td>Correcciones, sin cambios en cómo se usa</td><td>1.4.2 → 1.4.3</td></tr><tr><td>MENOR</td><td>Funciones nuevas que no rompen lo anterior</td><td>1.4.3 → 1.5.0</td></tr><tr><td>MAYOR</td><td>Cambios que obligan a adaptarse</td><td>1.5.0 → 2.0.0</td></tr></table></div>` },
   { act: 'semver' },
   { act: 'term', title: 'Misión: publica tu primera versión', xp: 50,
-    intro: 'El sitio está listo para su primera versión estable.',
-    setup: s => setupClonedRepo(s, 'practica-git', baseHistory),
+    intro: 'Con el teléfono corregido, <code>sitio-oficina</code> está listo para su primera versión estable.',
+    setup: s => buildProject(s, 'm13'), project: true,
     quick: ['git tag', 'git log --oneline', 'git show v1.0.0'],
     goals: [
       { t: 'Mira las etiquetas que existen', hint: 'git tag', check: (s, r) => !!r.listedTags },
       { t: 'Crea la etiqueta anotada <code>v1.0.0</code>', hint: 'git tag -a v1.0.0 -m "Primera versión estable del sitio"', check: s => rp(s).tags['v1.0.0'] && rp(s).tags['v1.0.0'].annotated },
       { t: 'Publícala: las etiquetas no viajan solas', hint: 'git push origin v1.0.0', check: s => !!s.remoteOf(rp(s)).tags['v1.0.0'] },
-      { t: 'Corrige algo y haz commit', hint: 'echo "Correo: info@ejemplo.com" >> contacto.md', why: 'Luego <code>git commit -am "Agrega correo de contacto"</code>.', check: s => s.headId(rp(s)) !== rp(s).tags['v1.0.0'].id },
-      { t: 'Etiqueta la corrección como <code>v1.0.1</code>', hint: 'git tag -a v1.0.1 -m "Agrega correo de contacto"', check: s => rp(s).tags['v1.0.1'] && rp(s).tags['v1.0.1'].id === s.headId(rp(s)) },
+      { t: 'Agrega la dirección de la oficina y haz commit', hint: 'echo "Dirección: Calle Central 10" >> contacto.md', why: 'Luego <code>git commit -am "Agrega dirección de la oficina"</code>.', check: s => s.headId(rp(s)) !== rp(s).tags['v1.0.0'].id },
+      { t: 'Etiqueta la corrección como <code>v1.0.1</code>', hint: 'git tag -a v1.0.1 -m "Agrega dirección de la oficina"', check: s => rp(s).tags['v1.0.1'] && rp(s).tags['v1.0.1'].id === s.headId(rp(s)) },
       { t: 'Publica todas tus etiquetas', hint: 'git push origin --tags', check: s => !!s.remoteOf(rp(s)).tags['v1.0.1'] },
       { t: 'Publica también el commit', hint: 'git push', check: s => s.remoteOf(rp(s)).branches.main === rp(s).branches.main }],
     outro: 'No se cambia una etiqueta publicada: si v1.0.0 tenía un error, la corrección es v1.0.1.' },
@@ -429,17 +417,17 @@ rama:         C --- D ----/</pre><p>Si main sí cambió, Git crea un commit espe
 /* ------------------------------------------------------------ 14 */
 { id: 'm14', n: 14, title: 'Proyecto práctico final', short: 'El flujo completo, de principio a fin', time: '45 min', goal: 'Hacer cada paso del proceso bien',
   blocks: [
-  { story: `<p><b>El escenario:</b> tu equipo mantiene <code>guia-equipo</code>, un sitio de guía interna para personas nuevas. El issue <b>#7</b> pide agregar una sección de <b>preguntas frecuentes</b>. Es un cambio pequeño a propósito: lo importante no es el contenido, sino hacer cada paso del proceso bien. <code>main</code> está protegida: nadie hace push directo.</p>` },
+  { story: `<p><b>El escenario:</b> es el último paso de <b>tu proyecto</b>, <code>sitio-oficina</code>. Ya tiene README, contacto, horario, sección "Sobre mí", reporte, lista del equipo y la versión <code>v1.0.1</code>. Ahora el issue <b>#7</b> pide agregar una página de <b>preguntas frecuentes</b>. Es un cambio pequeño a propósito: lo importante es hacer cada paso del proceso bien. Y el equipo acaba de proteger <code>main</code> (módulo 10): nadie hace push directo.</p>` },
   { act: 'term', title: 'Proyecto final: issue #7 de principio a fin', xp: 120,
-    intro: 'Usa todo lo que aprendiste. Cuando haga falta GitLab (revisión, pipeline, merge), usa los botones de la misión.',
-    setup: s => { s.user = { name: 'Tu Nombre', email: 'tu-correo@ejemplo.com' }; const url = 'git@gitlab.com:tu-usuario/guia-equipo.git'; s.clonable[url] = (sim, u) => { seedRemote(sim, u, ctx => { ctx.commit('Initial commit', { 'README.md': '# guia-equipo\n\nGuía para personas nuevas del equipo.\n', 'bienvenida.md': '# Bienvenida\n\nNos alegra tenerte aquí.\n' }, 'ana'); ctx.commit('Agrega contactos del equipo', { 'contactos.md': '# Contactos\n\nAna: ana@ejemplo.com\nLuis: luis@ejemplo.com\n' }, 'luis'); }); sim.remotes[u].protected = true; }; },
+    intro: 'Usa todo lo que aprendiste, en el mismo proyecto de siempre. Cuando haga falta GitLab (revisión, pipeline, merge), usa los botones de la misión.',
+    setup: s => buildProject(s, 'm14'), project: true,
     quick: ['git status', 'git log --oneline -5', 'cat faq.md', 'git branch -a'],
     actions: [
-      { label: '👀 Ana revisa la MR', run: s => { const r = s.repos['guia-equipo']; const R = r && s.remoteOf(r); const b = R && Object.keys(R.branches).find(x => x !== 'main'); if (!b) return { msg: 'Todavía no hay ninguna rama publicada para revisar. Haz push de tu rama primero.' }; return { ok: true, msg: '<b>Ana comentó (bloqueante):</b> «Falta una pregunta sobre el horario de trabajo. Las personas nuevas siempre lo preguntan.» Corrige en tu rama y haz push: la MR se actualiza sola.' }; }, flag: 'reviewed' },
-      { label: '✅ Fusionar en GitLab', run: s => { const r = s.repos['guia-equipo']; const R = r && s.remoteOf(r); const b = R && Object.keys(R.branches).find(x => x !== 'main'); if (!b) return { msg: 'No hay ninguna MR que fusionar todavía.' }; const t = s.tree(R.branches[b]); if (!/horario/i.test(t['faq.md'] || '')) return { msg: '<b>No se puede fusionar:</b> el hilo de Ana sigue sin resolver (en GitLab todavía falta la pregunta del horario).' }; const id = s.mkCommit(r, { msg: "Merge branch '" + b + "' into 'main'", tree: t, parents: [R.branches.main, R.branches[b]], author: AUTHORS.ana, lane: 'main' }); R.branches.main = id; delete R.branches[b]; return { ok: true, msg: '🟢 Pipeline <b>passed</b> · Ana aprobó · <b>Merged</b>. GitLab cerró el issue #7 (por el <code>Closes #7</code>) y borró la rama remota. Ahora pon tu computadora al día.' }; }, flag: 'merged' }],
+      { label: '👀 Ana revisa la MR', run: s => { const r = s.repos[PROJ]; const R = r && s.remoteOf(r); const b = R && Object.keys(R.branches).find(x => x !== 'main'); if (!b) return { msg: 'Todavía no hay ninguna rama publicada para revisar. Haz push de tu rama primero.' }; return { ok: true, msg: '<b>Ana comentó (bloqueante):</b> «Falta una pregunta sobre el horario de trabajo. Las personas nuevas siempre lo preguntan.» Corrige en tu rama y haz push: la MR se actualiza sola.' }; }, flag: 'reviewed' },
+      { label: '✅ Fusionar en GitLab', run: s => { const r = s.repos[PROJ]; const R = r && s.remoteOf(r); const b = R && Object.keys(R.branches).find(x => x !== 'main'); if (!b) return { msg: 'No hay ninguna MR que fusionar todavía.' }; const t = s.tree(R.branches[b]); if (!/horario/i.test(t['faq.md'] || '')) return { msg: '<b>No se puede fusionar:</b> el hilo de Ana sigue sin resolver (en GitLab todavía falta la pregunta del horario).' }; const id = s.mkCommit(r, { msg: "Merge branch '" + b + "' into 'main'", tree: t, parents: [R.branches.main, R.branches[b]], author: AUTHORS.ana, lane: 'main' }); R.branches.main = id; delete R.branches[b]; return { ok: true, msg: '🟢 Pipeline <b>passed</b> · Ana aprobó · <b>Merged</b>. GitLab cerró el issue #7 (por el <code>Closes #7</code>) y borró la rama remota. Ahora pon tu computadora al día.' }; }, flag: 'merged' }],
     goals: [
-      { t: 'Clona el proyecto', hint: 'git clone git@gitlab.com:tu-usuario/guia-equipo.git', check: s => !!s.repos['guia-equipo'] },
-      { t: 'Entra y revisa el estado y los últimos commits', hint: 'cd guia-equipo', why: 'Luego <code>git status</code> y <code>git log --oneline -5</code>.', check: (s, r, c) => s.cwd === '~/guia-equipo' && /^git log/.test(c) },
+      { t: 'Empieza el día trayendo lo último del equipo', hint: 'git pull', check: (s, r) => !!r.pulled && !r.err },
+      { t: 'Repasa cómo ha crecido tu proyecto', hint: 'git log --oneline -5', check: ran(/^git log/) },
       { t: 'Crea la rama para el issue #7 (tipo docs, con el número)', hint: 'git switch -c docs/7-preguntas-frecuentes', check: s => { const r = rp(s); return r && /^docs\/7-[a-z0-9-]+$/.test(r.head); } },
       { t: 'Crea <code>faq.md</code> con un título y una pregunta', hint: 'echo "# Preguntas frecuentes" > faq.md', why: 'Y luego: <code>echo "¿Dónde pido acceso a GitLab? Con Ana." &gt;&gt; faq.md</code>', check: s => (rp(s).files['faq.md'] || '').split('\n').filter(Boolean).length >= 2 },
       { t: 'Revisa y haz commit mencionando el issue <code>(#7)</code>', hint: 'git add faq.md', why: 'Luego <code>git commit -m "Agrega preguntas frecuentes (#7)"</code>. Antes, mira con <code>git status</code> y <code>git diff --staged</code>.', check: s => { const r = rp(s); const id = r.branches[r.head]; return /#7/.test(s.commits[id].msg) && s.tree(id)['faq.md'] !== undefined; } },

@@ -6,8 +6,9 @@ Inputs (src/, concatenated in filename order):
   2-sim.js      the in-browser Git simulator
   3-ui.js       progress store, activity renderers and the terminal lab
   4-widgets.js  chapter-specific interactive widgets
-  5-content.js  course content (modules, glossary, cheat sheet)
-  6-app.js      navigation and pages
+  5-project.js  the course project (sitio-oficina) and how it grows module by module
+  6-content.js  course content (modules, glossary, cheat sheet)
+  7-app.js      navigation and pages
 Output: index.html
 
 Run: python3 curso/build.py

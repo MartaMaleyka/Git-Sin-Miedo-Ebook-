@@ -280,7 +280,7 @@ function renderViz(sim, el, opts) {
     h('div', { class: 'zone' }, h('h4', null, '2 · La caja', h('small', null, 'staging')), c.staged.length ? box : empty('Vacía. Usa git add.')),
     h('div', { class: 'zone' }, h('h4', null, '3 · Tu historial', h('small', null, 'ramas locales')), local),
     h('div', { class: 'zone' }, h('h4', null, '4 · GitLab', h('small', null, 'remoto')), R && Object.keys(R.branches).length ? rem : empty(R ? 'Sin ramas publicadas' : 'Sin conectar'))));
-  if (opts.graph !== false) { const g = h('div', { class: 'graphbox' }, h('h4', null, 'Mapa del historial (se actualiza solo)')); g.append(drawGraph(sim, r)); el.append(g); }
+  if (opts.graph !== false) { const g = h('div', { class: 'graphbox' }, h('h4', null, 'Mapa del historial (se actualiza solo)')); g.append(drawGraph(sim, r)); el.append(g); requestAnimationFrame(() => { g.scrollLeft = g.scrollWidth; }); }
 }
 
 function rTerm(spec, id) {
@@ -347,6 +347,7 @@ function rTerm(spec, id) {
     sim = new Sim(); if (spec.setup) spec.setup(sim);
     gi = 0; finished = false; out.innerHTML = '';
     print('<span class="m">' + (spec.welcome || 'Terminal de práctica. Nada de lo que hagas aquí toca tu computadora. Escribe help para ver los comandos.') + '</span>');
+    if (spec.project && sim.repo) { const r = sim.repo; const n = sim.ancestors(sim.headId(r)).size; print('<span class="note">📁 <b>Tu proyecto: sitio-oficina</b>, tal como quedó al terminar el módulo anterior (' + n + ' commits, archivos: ' + Object.keys(r.files).sort().map(esc).join(', ') + '). Usa <code>git log --oneline</code> para ver su historia.</span>'); }
     prompt(); renderViz(sim, mapEl, spec); drawGoals();
     if (P.done[id]) { /* se puede repetir libremente */ }
   }

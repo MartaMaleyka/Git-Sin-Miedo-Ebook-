@@ -34,6 +34,7 @@ function renderModule(m) {
   view.append(h('header', { class: 'lhead' },
     h('span', { class: 'eyebrow' }, 'Módulo ' + m.n + ' · ' + (STAGES.find(s => s[1].includes(m.id)) || [''])[0]),
     h('h1', null, m.title), h('p', { class: 'lead' }, m.short + '.'),
+    ROADMAP[m.id] ? h('div', { class: 'fb info', style: 'margin:0', html: '📁 <b>Tu proyecto <code>sitio-oficina</code> en este módulo:</b> ' + ROADMAP[m.id] }) : null,
     h('div', { class: 'meta' }, h('span', { class: 'tag goal' }, '🎯 ' + m.goal), h('span', { class: 'tag' }, '⏱ ' + m.time), h('span', { class: 'tag' }, acts.length + ' actividades')), steps));
   m.blocks.forEach(b => view.append(renderBlock(b)));
   view.append(h('nav', { class: 'navbtns', 'aria-label': 'Navegación entre módulos' },
@@ -55,6 +56,9 @@ function renderHome() {
     h('div', { class: 'mini' }, h('b', null, '>_ Práctica en la terminal'), h('p', null, 'Misiones paso a paso con un mapa que dibuja lo que pasa, en vivo.')),
     h('div', { class: 'mini' }, h('b', null, '✓ Retos y checklist'), h('p', null, 'Quizzes, juegos de ordenar y clasificar, y un checklist para comprobar lo aprendido.'))),
     h('p', { class: 'muted', style: 'margin:0' }, 'Tu avance se guarda en este navegador. Puedes repetir cualquier actividad cuando quieras. No necesitas conocimientos previos: todo se explica aquí, paso a paso. Vas a equivocarte, y está bien. Casi todo en Git se puede deshacer.')));
+  view.append(h('section', { class: 'block analogy' }, h('div', { class: 'kind' }, h('i', null, '📁'), 'Un solo proyecto, de principio a fin'),
+    h('p', { html: 'Durante todo el curso trabajas en <b>el mismo proyecto</b>: <code>sitio-oficina</code>, la página web de la oficina que mantienes con Ana y Luis. Lo descargas en el módulo 2 y cada módulo le agrega algo, como en un equipo real. Cuando empieces una práctica, el proyecto estará tal como quedó en la anterior, más lo que tu equipo haya publicado mientras tanto.' }),
+    h('ol', { class: 'olist' }, MODULES.filter(m => ['m2', 'm3', 'm4', 'm5', 'm6', 'm7', 'm12', 'm13', 'm14'].includes(m.id)).map(m => h('li', null, h('span', { class: 'n' }, m.n), h('span', { html: '<a href="#' + m.id + '">' + esc(m.title) + '</a>: ' + ROADMAP[m.id] }))))));
   STAGES.forEach(([name, ids]) => {
     view.append(h('div', { class: 'stage-label' }, name));
     view.append(h('div', { class: 'path' }, ids.map(id => { const m = MODULES.find(x => x.id === id); const p = modPct(m); return h('a', { class: 'pcard' + (p === 100 ? ' done' : ''), href: '#' + id }, h('div', { class: 'top' }, h('span', { class: 'n' }, 'Módulo ' + m.n), h('span', { class: 'pct', style: 'font:500 .72rem var(--f-mono);color:' + (p === 100 ? 'var(--teal)' : 'var(--muted)') }, p === 100 ? 'Completado ✓' : p + '%')), h('h3', null, m.title), h('p', null, m.short + ' · ' + m.time), h('div', { class: 'bar' }, h('i', { style: 'width:' + p + '%' }))); })));
